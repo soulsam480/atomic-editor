@@ -14,7 +14,6 @@ import {
   type AtomicCodeMirrorEditorHandle,
   type WikiLinkSuggestion,
 } from '@atomic-editor/editor';
-import { ATOMIC_CODE_LANGUAGES } from '@atomic-editor/editor/code-languages';
 import '@atomic-editor/editor/styles.css';
 import {
   SAMPLE_SIZES,
@@ -633,7 +632,6 @@ export const App = defineComponent({
               markdownSource: markdownSource.value,
               documentId: documentId.value,
               readOnly: readOnly.value,
-              codeLanguages: ATOMIC_CODE_LANGUAGES,
               initialRevealText: revealText,
               onMarkdownChange: handleMarkdownChange,
               onLinkClick: (url: string) => {

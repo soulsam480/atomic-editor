@@ -50,10 +50,9 @@ import {
   highlightMarkdown,
   startAsteriskList,
 } from '@atomic-editor/editor';
-import { ATOMIC_CODE_LANGUAGES } from '@atomic-editor/editor/code-languages';
 import '@atomic-editor/editor/styles.css';
 
-if (!highlightMarkdown || !startAsteriskList || !ATOMIC_CODE_LANGUAGES.length) {
+if (!highlightMarkdown || !startAsteriskList) {
   throw new Error('documented public exports are missing');
 }
 

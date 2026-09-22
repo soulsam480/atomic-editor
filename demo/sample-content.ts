@@ -335,10 +335,11 @@ export function generateSampleMarkdown(
     // for the section loop below.
     '## Try it',
   ];
-  // 1. Fenced code block — shows per-grammar syntax highlighting.
+  // 1. Fenced code block — rendered as plain monospace; grammars are
+  // supplied by the consumer via the `codeLanguages` prop.
   if (includeCodeBlocks) {
     sections.push(
-      'Fenced code blocks pick up per-language syntax highlighting. The grammar loads lazily — only fences you actually open hit the wire:',
+      'Fenced code blocks pick up highlighting only from the grammars you pass in. The editor bundles none — bring your own with `codeLanguages`:',
       '```' + SHOWCASE_CODE.lang + '\n' + SHOWCASE_CODE.body + '\n```',
     );
   }
