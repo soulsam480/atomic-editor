@@ -30,15 +30,21 @@ try {
     ['install', '--ignore-scripts', '--no-audit', '--no-fund', tarball],
     { cwd: temp, maxBuffer: 10 * 1024 * 1024, timeout: 120_000 },
   );
+  // `vue` is a peer dep of the editor; install it alongside the tarball
+  // so the consumer resolves a single copy, exactly as a real user would.
+  await exec(
+    npm,
+    ['install', '--ignore-scripts', '--no-audit', '--no-fund', 'vue@^3.4.0'],
+    { cwd: temp, maxBuffer: 10 * 1024 * 1024, timeout: 120_000 },
+  );
 
   await writeFile(
     path.join(temp, 'index.html'),
-    '<!doctype html><html><body><div id="root"></div><script type="module" src="/main.jsx"></script></body></html>',
+    '<!doctype html><html><body><div id="root"></div><script type="module" src="/main.ts"></script></body></html>',
   );
   await writeFile(
-    path.join(temp, 'main.jsx'),
-    `import React from 'react';
-import { createRoot } from 'react-dom/client';
+    path.join(temp, 'main.ts'),
+    `import { createApp, h } from 'vue';
 import {
   AtomicCodeMirrorEditor,
   highlightMarkdown,
@@ -51,9 +57,10 @@ if (!highlightMarkdown || !startAsteriskList || !ATOMIC_CODE_LANGUAGES.length) {
   throw new Error('documented public exports are missing');
 }
 
-createRoot(document.getElementById('root')).render(
-  React.createElement(AtomicCodeMirrorEditor, { markdownSource: '# package smoke' }),
-);
+createApp({
+  render: () =>
+    h(AtomicCodeMirrorEditor, { markdownSource: '# package smoke' }),
+}).mount('#root');
 `,
   );
 
