@@ -1,6 +1,6 @@
 {
   "name": "@atomic-editor/editor",
-  "version": "0.6.2",
+  "version": "0.7.0",
   "description": "CodeMirror 6 markdown editor with Obsidian-style inline live preview.",
   "keywords": [
     "codemirror",
@@ -10,7 +10,7 @@
     "wysiwyg",
     "live-preview",
     "obsidian",
-    "react"
+    "vue"
   ],
   "license": "MIT",
   "author": "Kenny Bergquist",
@@ -64,9 +64,7 @@
     "test:e2e:legacy:headed": "node scripts/test-editor.mjs --headed",
     "test:e2e:playwright": "playwright test",
     "test:e2e:headed": "playwright test --project=chromium --headed",
-    "test:package": "node scripts/test-package.mjs",
-    "prepare": "npm run build",
-    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
+    "test:package": "node scripts/test-package.mjs"
   },
   "peerDependencies": {
     "@codemirror/autocomplete": "^6.0.0",
@@ -93,8 +91,7 @@
     "@lezer/common": "^1.0.0",
     "@lezer/highlight": "^1.0.0",
     "@lezer/markdown": "^1.0.0",
-    "react": "^18.0.0 || ^19.0.0",
-    "react-dom": "^18.0.0 || ^19.0.0"
+    "vue": "^3.4.0"
   },
   "peerDependenciesMeta": {
     "@codemirror/lang-cpp": {
@@ -166,15 +163,10 @@
     "@lezer/highlight": "^1.2.3",
     "@lezer/markdown": "^1.6.3",
     "@playwright/test": "^1.61.1",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.3",
     "@vue/test-utils": "^2.5.1",
     "cpy-cli": "^7.0.0",
     "happy-dom": "^20.10.6",
     "playwright": "^1.61.1",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
     "typescript": "^7.0.2",
     "vite": "^8.1.4",
     "vitest": "^4.1.10",
