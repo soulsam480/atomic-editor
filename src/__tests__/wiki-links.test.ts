@@ -1,6 +1,5 @@
 import { describe, expect, it, afterEach, vi } from 'vitest';
-import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
+import { mount } from '@vue/test-utils';
 import {
   Compartment,
   EditorState,
@@ -12,38 +11,41 @@ import { AtomicCodeMirrorEditor } from '../AtomicCodeMirrorEditor';
 import { readOnlyExtension } from '../read-only';
 import { wikiLinks } from '../wiki-links';
 
-type Mounted = { host: HTMLElement; root: Root };
-const mounts: Mounted[] = [];
+const mounted: { host: HTMLElement; wrapper: ReturnType<typeof mount> }[] = [];
 const views: EditorView[] = [];
 
-function mount(markdown: string, options: Parameters<typeof wikiLinks>[0] = {}): Mounted {
+function mountEditor(
+  markdown: string,
+  options: Parameters<typeof wikiLinks>[0] = {},
+): { host: HTMLElement } {
   const host = document.createElement('div');
   host.style.width = '600px';
   host.style.height = '400px';
   document.body.appendChild(host);
-  const root = createRoot(host);
-  act(() => {
-    root.render(
-      <AtomicCodeMirrorEditor
-        markdownSource={markdown}
-        extensions={[
-          wikiLinks({
-            resolve: async (target) => ({ target, label: 'Resolved Target', status: 'resolved' }),
-            ...options,
+  const wrapper = mount(AtomicCodeMirrorEditor, {
+    props: {
+      markdownSource: markdown,
+      extensions: [
+        wikiLinks({
+          resolve: async (target) => ({
+            target,
+            label: 'Resolved Target',
+            status: 'resolved',
           }),
-        ]}
-      />,
-    );
+          ...options,
+        }),
+      ],
+    },
+    attachTo: host,
   });
-  const m = { host, root };
-  mounts.push(m);
-  return m;
+  mounted.push({ host, wrapper });
+  return { host };
 }
 
 afterEach(() => {
-  for (const m of mounts.splice(0)) {
-    act(() => m.root.unmount());
-    m.host.remove();
+  for (const { host, wrapper } of mounted.splice(0)) {
+    wrapper.unmount();
+    host.remove();
   }
   for (const view of views.splice(0)) {
     const parent = view.dom.parentElement;
@@ -69,19 +71,21 @@ function makeView(
 
 describe('wikiLinks', () => {
   it('renders labeled wiki links without exposing the target as visible link text', () => {
-    const { host } = mount('Linked atom: [[atom-123|Project Atlas]]');
+    const { host } = mountEditor('Linked atom: [[atom-123|Project Atlas]]');
 
     const link = host.querySelector<HTMLElement>('.cm-atomic-wiki-link');
     expect(link).not.toBeNull();
     expect(link?.dataset.wikiLinkTarget).toBe('atom-123');
     expect(link?.textContent).toBe('Project Atlas');
 
-    const hiddenSyntax = host.querySelector('.cm-atomic-wiki-link-hidden-syntax');
+    const hiddenSyntax = host.querySelector(
+      '.cm-atomic-wiki-link-hidden-syntax',
+    );
     expect(hiddenSyntax?.textContent).toContain('atom-123');
   });
 
   it('leaves inline-code wiki-link text untouched', () => {
-    const { host } = mount('Code: `[[atom-123|Project Atlas]]`');
+    const { host } = mountEditor('Code: `[[atom-123|Project Atlas]]`');
 
     expect(host.querySelector('.cm-atomic-wiki-link')).toBeNull();
     expect(host.textContent).toContain('[[atom-123|Project Atlas]]');
@@ -89,7 +93,7 @@ describe('wikiLinks', () => {
 
   it('opens on plain click by default when an opener is configured', () => {
     const onOpen = vi.fn();
-    const { host } = mount('Linked atom: [[atom-123|Project Atlas]]', {
+    const { host } = mountEditor('Linked atom: [[atom-123|Project Atlas]]', {
       onOpen,
     });
 
@@ -120,7 +124,7 @@ describe('wikiLinks', () => {
 
   it('can require modifier-click for opening', () => {
     const onOpen = vi.fn();
-    const { host } = mount('Linked atom: [[atom-123|Project Atlas]]', {
+    const { host } = mountEditor('Linked atom: [[atom-123|Project Atlas]]', {
       onOpen,
       openOnClick: false,
     });
@@ -130,7 +134,11 @@ describe('wikiLinks', () => {
   });
 
   it('does not resolve a bare wiki link while the cursor is inside it', () => {
-    const resolve = vi.fn(async (target: string) => ({ target, label: 'Resolved Target', status: 'resolved' as const }));
+    const resolve = vi.fn(async (target: string) => ({
+      target,
+      label: 'Resolved Target',
+      status: 'resolved' as const,
+    }));
     const cursorInsideTarget = 'Draft: [['.length + 2;
     const view = makeView(
       'Draft: [[atom-123]]',
@@ -147,7 +155,11 @@ describe('wikiLinks', () => {
   });
 
   it('does not resolve or decorate bare links rejected by the resolver policy', () => {
-    const resolve = vi.fn(async (target: string) => ({ target, label: 'Resolved Target', status: 'resolved' as const }));
+    const resolve = vi.fn(async (target: string) => ({
+      target,
+      label: 'Resolved Target',
+      status: 'resolved' as const,
+    }));
     const view = makeView('Draft: [[not-an-atom-id]]', [
       wikiLinks({
         resolve,
@@ -166,13 +178,21 @@ describe('wikiLinks', () => {
       doc,
       [
         wikiLinks({
-          resolve: async (target) => ({ target, label: 'Missing atom', status: 'missing' }),
+          resolve: async (target) => ({
+            target,
+            label: 'Missing atom',
+            status: 'missing',
+          }),
         }),
       ],
       { anchor: 'Before [[missing-target]]'.length },
     );
 
-    const event = new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true, cancelable: true });
+    const event = new KeyboardEvent('keydown', {
+      key: 'Backspace',
+      bubbles: true,
+      cancelable: true,
+    });
     const dispatched = view.contentDOM.dispatchEvent(event);
 
     expect(dispatched).toBe(false);
