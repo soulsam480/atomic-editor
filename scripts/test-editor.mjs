@@ -2239,7 +2239,7 @@ async function probeCopyIsRawMarkdown(page) {
 // or to lines far from the edit are "the whole page jumped" — the bug.
 
 async function resetToCanonical(page) {
-  // Edits persist to localStorage (see demo/App.tsx). Clear the key and
+  // Edits persist to localStorage (see demo/App.ts). Clear the key and
   // reload so each edge case starts from the pristine generated sample.
   await page.evaluate(() => {
     try {

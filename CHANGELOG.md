@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Until the package reaches `1.0.0`, minor versions may include breaking API
 changes as the public surface stabilizes.
 
+## [0.7.0]
+
+This release is a fork of
+[kenforthewin/atomic-editor](https://github.com/kenforthewin/atomic-editor).
+The React-to-Vue port was done **entirely by AI** — no human wrote it — by
+the model `deepseek-v4.1-flash` running in
+[opencode](https://opencode.ai).
+
+### Breaking changes
+
+- Replaced the React wrapper with a Vue 3 component (`defineComponent` + `h`).
+- `onMarkdownChange` / `onLinkClick` are now Vue events (`@markdown-change`,
+  `@link-click`); the imperative handle is published via `defineExpose`
+  instead of the `editorHandleRef` prop. Use `useAtomicEditorHandle` for a
+  typed ref.
+- `react` / `react-dom` are no longer dependencies; `vue` is now a peer
+  dependency.
+- Extracted `createEditorRuntime` — a framework-agnostic CM6 runtime — and
+  exported it for consumers composing their own editor.
+- Removed the bundled fenced-code language registry and the
+  `@atomic-editor/editor/code-languages` sub-path export, along with all
+  optional `@codemirror/lang-*` / `@codemirror/legacy-modes` peer
+  dependencies. Fenced code blocks render as plain monospace by default;
+  consumers install the grammars they want and pass them via the
+  `codeLanguages` prop.
+
+### Distribution
+
+- The package is distributed by committing `dist/` and installing from git;
+  the `prepare` hook was removed so installs use the committed build.
+
 ## [0.6.2]
 
 ### Changed

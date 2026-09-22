@@ -1,6 +1,6 @@
 # Atomic Editor
 
-**Obsidian-style live preview for [CodeMirror 6](https://codemirror.net/), in React.**
+**Obsidian-style live preview for [CodeMirror 6](https://codemirror.net/), in Vue.**
 
 [![npm version](https://img.shields.io/npm/v/@atomic-editor/editor?color=7c3aed&labelColor=2d2d2d)](https://www.npmjs.com/package/@atomic-editor/editor)
 [![license](https://img.shields.io/npm/l/@atomic-editor/editor?color=7c3aed&labelColor=2d2d2d)](./LICENSE)
@@ -17,6 +17,18 @@ It's the writing surface behind
 base — extracted to stand on its own, and hardened on real user documents.
 
 [**Try the live demo →**](https://kenforthewin.github.io/atomic-editor/)
+
+> **Fork notice.** This is a fork of
+> [kenforthewin/atomic-editor](https://github.com/kenforthewin/atomic-editor).
+> The React-to-Vue port was done **entirely by AI** — no human wrote the
+> port. The work was performed by the model **`deepseek-v4.1-flash`**
+> running in [opencode](https://opencode.ai).
+
+> **0.7.0 — Vue.** The React wrapper was replaced by a Vue component.
+> React props/refs map to Vue events and an exposed handle:
+> `onMarkdownChange` → `@markdown-change`, `onLinkClick` → `@link-click`,
+> `editorHandleRef` → a component `ref` (see `useAtomicEditorHandle`).
+> React consumers should pin `0.6.x` until they migrate.
 
 ## Features
 
@@ -49,35 +61,34 @@ npm install @atomic-editor/editor \
   @codemirror/autocomplete @codemirror/language @codemirror/search \
   @codemirror/lang-markdown \
   @lezer/common @lezer/highlight @lezer/markdown \
-  react react-dom
+  vue
 ```
 
-The CodeMirror and React packages are declared as **peer dependencies**
+The CodeMirror and Vue packages are declared as **peer dependencies**
 rather than regular deps. You install them alongside the editor so
 your bundler resolves a single shared copy — two copies of
 `@codemirror/state` in one bundle would silently break the editor's
 state-field identity checks.
 
-Fenced-code language grammars (`@codemirror/lang-javascript`,
-`@codemirror/lang-python`, etc.) are **optional peers** — install only
-the ones you want highlighted. See
+Fenced-code language grammars are **not bundled** — install and pass
+the `@codemirror/lang-*` packages you want highlighted. See
 [Syntax highlighting](#syntax-highlighting) below.
 
 ## Use
 
-```tsx
+```ts
+import { createApp, h } from 'vue';
 import { AtomicCodeMirrorEditor } from '@atomic-editor/editor';
 import '@atomic-editor/editor/styles.css';
 
-function App() {
-  return (
-    <AtomicCodeMirrorEditor
-      markdownSource={'# Hello\n\nA paragraph.'}
-      onMarkdownChange={(md) => console.log(md)}
-      onLinkClick={(url) => window.open(url, '_blank', 'noopener,noreferrer')}
-    />
-  );
-}
+createApp({
+  render: () =>
+    h(AtomicCodeMirrorEditor, {
+      markdownSource: '# Hello\n\nA paragraph.',
+      onMarkdownChange: (md) => console.log(md),
+      onLinkClick: (url) => window.open(url, '_blank', 'noopener,noreferrer'),
+    }),
+}).mount('#app');
 ```
 
 The editor fills its parent — wrap it in a height-bounded flex or grid
@@ -85,29 +96,31 @@ container.
 
 ### Imperative handle
 
-Pass a ref if you need to drive the editor from outside — e.g. wire
-your own toolbar buttons, or open the search panel from a global
-keybinding:
+Reach for the exposed handle if you need to drive the editor from
+outside — e.g. wire your own toolbar buttons, or open the search panel
+from a global keybinding:
 
-```tsx
-import { useRef } from 'react';
+```ts
+import { h } from 'vue';
 import {
   AtomicCodeMirrorEditor,
-  type AtomicCodeMirrorEditorHandle,
+  useAtomicEditorHandle,
 } from '@atomic-editor/editor';
 
-function App() {
-  const editor = useRef<AtomicCodeMirrorEditorHandle | null>(null);
-  return (
-    <>
-      <button onClick={() => editor.current?.openSearch()}>Search</button>
-      <AtomicCodeMirrorEditor
-        markdownSource={'…'}
-        editorHandleRef={editor}
-      />
-    </>
-  );
-}
+const { handle, setHandle } = useAtomicEditorHandle();
+
+export default {
+  setup() {
+    return () =>
+      h('div', [
+        h('button', { onClick: () => handle.value?.openSearch() }, 'Search'),
+        h(AtomicCodeMirrorEditor, {
+          ref: setHandle,
+          markdownSource: '…',
+        }),
+      ]);
+  },
+};
 ```
 
 Methods: `focus`, `undo`, `redo`, `openSearch(query?)`, `closeSearch`,
@@ -119,8 +132,8 @@ Methods: `focus`, `undo`, `redo`, `openSearch(query?)`, `closeSearch`,
 Pass `readOnly` to render the document as a reading surface, like
 Obsidian's Reading view:
 
-```tsx
-<AtomicCodeMirrorEditor markdownSource={'…'} readOnly />
+```ts
+h(AtomicCodeMirrorEditor, { markdownSource: '…', readOnly: true });
 ```
 
 In read-only mode the whole document stays rendered — source never
@@ -132,7 +145,7 @@ find-in-document still works.
 `readOnly` is backed by a CodeMirror `Compartment`, so flipping it
 reconfigures the live view in place — scroll position and search state
 are preserved, no remount. Drive it from a prop, or imperatively via
-`editorHandle.setReadOnly(true)` for a toolbar toggle outside React's
+`handle.setReadOnly(true)` for a toolbar toggle outside the component's
 render cycle. For consumers composing a custom editor, the underlying
 `readOnlyFacet` and `readOnlyExtension` are exported too.
 
@@ -163,42 +176,22 @@ palette.
 
 ## Syntax highlighting
 
-Fenced code blocks are plain monospace by default. To enable
-highlighting, pass a `codeLanguages` array. `@codemirror/lang-markdown`
-dynamically imports each grammar the first time a fence uses it, so
-large lists don't bloat the initial bundle.
-
-### Option 1: use the curated list (~20 languages)
+The editor bundles **no** language grammars — fenced code blocks render
+as plain monospace by default. Bring your own: install the
+`@codemirror/lang-*` package(s) you want and pass a `codeLanguages`
+array. `@codemirror/lang-markdown` dynamically imports each grammar the
+first time a fence uses it, so large lists don't bloat the initial
+bundle.
 
 ```bash
-# Install the lang-* peers you want highlighted.
-npm install \
-  @codemirror/lang-javascript @codemirror/lang-python \
-  @codemirror/lang-rust @codemirror/lang-go @codemirror/lang-html \
-  @codemirror/lang-css @codemirror/lang-json @codemirror/lang-yaml \
-  @codemirror/legacy-modes  # ruby/swift/shell/toml/dockerfile
+npm install @codemirror/lang-python
 ```
 
-```tsx
-import { AtomicCodeMirrorEditor } from '@atomic-editor/editor';
-import { ATOMIC_CODE_LANGUAGES } from '@atomic-editor/editor/code-languages';
-
-<AtomicCodeMirrorEditor
-  markdownSource={'…'}
-  codeLanguages={ATOMIC_CODE_LANGUAGES}
-/>
-```
-
-See [`src/code-languages.ts`](./src/code-languages.ts) for the full
-list (JavaScript, TypeScript, Python, Go, Rust, Ruby, Java, C, C++,
-PHP, Swift, Shell, SQL, HTML, CSS, XML, JSON, YAML, TOML, Dockerfile,
-Markdown).
-
-### Option 2: bring your own
-
-```tsx
+```ts
+import { h } from 'vue';
 import { LanguageDescription } from '@codemirror/language';
 import { python } from '@codemirror/lang-python';
+import { AtomicCodeMirrorEditor } from '@atomic-editor/editor';
 
 const codeLanguages = [
   LanguageDescription.of({
@@ -209,8 +202,12 @@ const codeLanguages = [
   }),
 ];
 
-<AtomicCodeMirrorEditor markdownSource={'…'} codeLanguages={codeLanguages} />
+h(AtomicCodeMirrorEditor, { markdownSource: '…', codeLanguages });
 ```
+
+Any `LanguageDescription` list works — e.g. build one per language from
+`@codemirror/lang-javascript`, `@codemirror/lang-rust`, or the legacy
+stream parsers in `@codemirror/legacy-modes`.
 
 ## Wiki links
 
@@ -220,19 +217,20 @@ resolves bare targets asynchronously (to show a real title and a
 resolved / missing state), opens links on click, and offers autocomplete as
 soon as you type `[[`:
 
-```tsx
+```ts
+import { h } from 'vue';
 import { AtomicCodeMirrorEditor, wikiLinks } from '@atomic-editor/editor';
 
-<AtomicCodeMirrorEditor
-  markdownSource={'See [[atom-42|the design doc]] for details.'}
-  extensions={[
+h(AtomicCodeMirrorEditor, {
+  markdownSource: 'See [[atom-42|the design doc]] for details.',
+  extensions: [
     wikiLinks({
-      suggest: async (query) => store.search(query),     // autocomplete source
-      resolve: async (target) => store.resolve(target),  // label + status for bare links
-      onOpen: (target) => router.open(target),           // click / Cmd-click to navigate
+      suggest: async (query) => store.search(query), // autocomplete source
+      resolve: async (target) => store.resolve(target), // label + status for bare links
+      onOpen: (target) => router.open(target), // click / Cmd-click to navigate
     }),
-  ]}
-/>;
+  ],
+});
 ```
 
 Draft links stay editable while the cursor is inside them; resolution is
@@ -300,7 +298,8 @@ autocomplete sources, custom decorations, domain-specific keymaps,
 collaboration (yjs), vim mode, or anything else. (The
 [wiki-links](#wiki-links) extension above is built with exactly this hook.)
 
-```tsx
+```ts
+import { h } from 'vue';
 import { autocompletion, type CompletionContext } from '@codemirror/autocomplete';
 
 const hashtags = autocompletion({
@@ -314,10 +313,10 @@ const hashtags = autocompletion({
   }],
 });
 
-<AtomicCodeMirrorEditor
-  markdownSource={'…'}
-  extensions={[hashtags]}
-/>
+h(AtomicCodeMirrorEditor, {
+  markdownSource: '…',
+  extensions: [hashtags],
+});
 ```
 
 Consumer extensions are appended after the built-ins, so wrap a custom
@@ -327,7 +326,7 @@ reference unless you want a remount.
 
 ### Low-level composition
 
-If the React wrapper's extension set is too opinionated, every piece
+If the Vue wrapper's extension set is too opinionated, every piece
 is exported individually so you can assemble a fully custom editor:
 
 ```ts
@@ -346,7 +345,7 @@ You could build an editor that includes `inlinePreview()` + `tables()`
 but skips `atomicEditorTheme` for your own `EditorView.theme({...})`,
 or swap `atomicMarkdownSyntax` for a custom
 `syntaxHighlighting(HighlightStyle.define([...]))`. At that point
-you're outside the React wrapper and in plain CM6 territory.
+you're outside the Vue wrapper and in plain CM6 territory.
 
 ## Design notes
 

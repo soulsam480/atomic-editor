@@ -66,7 +66,8 @@ doesn't shift.
 ```
 src/
   index.ts               public API (AtomicCodeMirrorEditor + types)
-  AtomicCodeMirrorEditor.tsx   React shell + imperative handle
+  AtomicCodeMirrorEditor.ts   Vue shell (defineComponent + h) + exposed handle
+  editor-runtime.ts      framework-agnostic CM6 runtime (no Vue)
   inline-preview.ts      main decoration engine (ViewPlugin)
   highlight.ts           `==highlight==` markdown parser extension
   image-blocks.ts        block image widgets (StateField)
@@ -74,7 +75,6 @@ src/
   read-only.ts           shared reading-mode facet + CM6 extension
   edit-helpers.ts        bracket / emphasis auto-pairing
   atomic-theme.ts        theme + syntax highlighting
-  code-languages.ts      curated fenced-code grammar registry
   styles/inline-preview.css   all editor CSS in one file
 ```
 
@@ -85,13 +85,17 @@ are what prevent that.
 
 ## `AtomicCodeMirrorEditor`
 
-A React wrapper around a single `EditorView`. Teardown on unmount;
-document identity (`documentId ?? markdownSource`) keys the view so
-cursor / undo state from one document can't bleed into the next.
+A thin Vue (`defineComponent` + `h`) wrapper around a single
+`EditorView` owned by `editor-runtime.ts`. Teardown on unmount; document
+identity (`documentId ?? markdownSource`) keys the view so cursor /
+undo state from one document can't bleed into the next.
 
-The component exposes an imperative handle via `editorHandleRef`:
-`focus`, `undo`, `redo`, `openSearch(query?)`, `closeSearch`,
-`isSearchOpen`, `getMarkdown`, `getContentDOM`, `setReadOnly(readOnly)`.
+`onMarkdownChange` and `onLinkClick` are Vue events (`@markdown-change`,
+`@link-click`). The imperative handle (`focus`, `undo`, `redo`,
+`openSearch(query?)`, `closeSearch`, `isSearchOpen`, `getMarkdown`,
+`getContentDOM`, `setReadOnly(readOnly)`, `revealText(query)`) is
+published with `defineExpose`, so parents reach it through a component
+`ref` (see `useAtomicEditorHandle`).
 
 Notable props:
 
@@ -104,12 +108,17 @@ Notable props:
 - `readOnly` — toggles a compartment-backed reading mode without
   remounting, preserving scroll and search state while disabling text
   and table editing.
-- `onLinkClick` — called when the user taps the external-link icon
-  while editing, or the rendered link itself in reading mode. Defaults
-  to `window.open`; override for platform-specific shells (Tauri,
-  Capacitor, Electron).
+- `onLinkClick` — emitted when the user taps the external-link icon
+  while editing, or the rendered link itself in reading mode. With no
+  listener the component falls back to `window.open`; listen to
+  override for platform-specific shells (Tauri, Capacitor, Electron).
 - `codeLanguages` — grammars for fenced code blocks; defaults to
   `[]`. See the README for usage.
+
+`extensions` and `codeLanguages` are captured at mount and only
+re-applied when the document identity changes. Pass stable references;
+changing the array without changing `documentId ?? markdownSource` does
+not re-apply.
 
 ## `inline-preview.ts` — the decoration engine
 
@@ -313,15 +322,13 @@ Two CM6 extensions:
   palette by default and flip to a GitHub-style light palette when
   `[data-theme="light"]` is set.
 
-## `code-languages.ts`
+## Syntax highlighting
 
-The curated fenced-code language registry. Each language's `load()`
-is a dynamic import so the bundler splits each grammar into its own
-chunk and users only download grammars they open.
-
-The registry is exposed at the `/code-languages` sub-path so
-consumers opt in explicitly; the main entry bundle has no lang-*
-dependencies.
+The package bundles **no** language grammars. Fenced code blocks render
+as plain monospace by default. Consumers who want highlighting install
+the `@codemirror/lang-*` packages they need and pass them through the
+`codeLanguages` prop; `@codemirror/lang-markdown` lazy-imports each
+grammar on first use, so unrelated grammars never hit the wire.
 
 ## Search
 

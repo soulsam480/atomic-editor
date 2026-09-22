@@ -11,7 +11,6 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
-    "jsx": "react-jsx",
 
     "strict": true,
     "noUnusedLocals": true,
@@ -19,8 +18,7 @@
     "noFallthroughCasesInSwitch": true,
 
     "paths": {
-      "@atomic-editor/editor": ["./src/index.ts"],
-      "@atomic-editor/editor/code-languages": ["./src/code-languages.ts"]
+      "@atomic-editor/editor": ["./src/index.ts"]
     }
   },
   "include": [

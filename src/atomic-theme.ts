@@ -125,7 +125,8 @@ export const atomicEditorTheme: Extension = EditorView.theme(
 );
 
 // Markdown syntax tinting plus highlight colors for tokens emitted by
-// grammars nested inside fenced code blocks (see `code-languages.ts`).
+// grammars nested inside fenced code blocks (supplied by the consumer
+// via the `codeLanguages` prop).
 // Punctuation tokens (#, *, `, [, ]) stay muted so the surrounding
 // prose reads cleanly; headings and structural markdown tokens get
 // real visual weight. Code-language tokens (keyword, string, number,
@@ -157,9 +158,9 @@ export const atomicMarkdownHighlight = HighlightStyle.define([
   { tag: t.list, color: 'var(--atomic-editor-fg, #dcddde)' },
   { tag: t.meta, color: 'var(--atomic-editor-fg-faint, #666)' },
 
-  // Nested code-language tokens. `@codemirror/lang-markdown` wires the
-  // grammars from `code-languages.ts` into fenced blocks whose info
-  // string matches — each fence gets a real AST, so tags below apply.
+  // Nested code-language tokens. `@codemirror/lang-markdown` wires any
+  // consumer-supplied grammars into fenced blocks whose info string
+  // matches — each fence gets a real AST, so tags below apply.
   {
     tag: [t.keyword, t.modifier, t.operatorKeyword, t.controlKeyword, t.definitionKeyword, t.moduleKeyword, t.self],
     color: 'var(--atomic-editor-hl-keyword, #c792ea)',

@@ -1,8 +1,19 @@
-export { AtomicCodeMirrorEditor } from './AtomicCodeMirrorEditor';
+export {
+  AtomicCodeMirrorEditor,
+  useAtomicEditorHandle,
+} from './AtomicCodeMirrorEditor';
 export type {
   AtomicCodeMirrorEditorHandle,
   AtomicCodeMirrorEditorProps,
 } from './AtomicCodeMirrorEditor';
+
+// Framework-agnostic runtime. Lets consumers mount a bare CM6 editor
+// with the same extension set, control it imperatively, and skip Vue.
+export { createEditorRuntime } from './editor-runtime';
+export type {
+  CreateEditorRuntimeOptions,
+  EditorRuntime,
+} from './editor-runtime';
 
 // Individual extension factories. Exposed so consumers can compose a
 // stripped-down editor, bisect regressions, or cherry-pick a single

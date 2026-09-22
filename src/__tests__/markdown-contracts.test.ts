@@ -1,35 +1,34 @@
-import { act } from 'react';
-import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
+import { mount } from '@vue/test-utils';
 import { AtomicCodeMirrorEditor } from '../AtomicCodeMirrorEditor';
 import { MARKDOWN_CONTRACTS } from './fixtures/markdown-contracts';
 
-const hosts: HTMLElement[] = [];
-const roots: Root[] = [];
+const mounted: { host: HTMLElement; wrapper: ReturnType<typeof mount> }[] = [];
 
-function mount(markdown: string): HTMLElement {
+function mountEditor(markdown: string): HTMLElement {
   const host = document.createElement('div');
   host.style.width = '720px';
   host.style.height = '640px';
   document.body.appendChild(host);
-  hosts.push(host);
-  const root = createRoot(host);
-  roots.push(root);
-  act(() => root.render(<AtomicCodeMirrorEditor markdownSource={markdown} />));
+  const wrapper = mount(AtomicCodeMirrorEditor, {
+    props: { markdownSource: markdown },
+    attachTo: host,
+  });
+  mounted.push({ host, wrapper });
   return host;
 }
 
 afterEach(() => {
-  act(() => {
-    for (const root of roots.splice(0)) root.unmount();
-  });
-  for (const host of hosts.splice(0)) host.remove();
+  for (const { host, wrapper } of mounted.splice(0)) {
+    wrapper.unmount();
+    host.remove();
+  }
 });
 
 describe('shared Markdown rendering contracts', () => {
   for (const contract of MARKDOWN_CONTRACTS) {
     it(contract.name, () => {
-      const host = mount(contract.markdown);
+      const host = mountEditor(contract.markdown);
       const visible = host.querySelector('.cm-content')?.textContent ?? '';
 
       for (const text of contract.containsText ?? []) {
