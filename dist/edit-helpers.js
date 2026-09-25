@@ -1,6 +1,6 @@
-import { syntaxTree } from '@codemirror/language';
-import { Prec } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
+import { syntaxTree } from "@codemirror/language";
+import { Prec } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 // Resolve the ambiguity between an emphasis opener and an unordered-list
 // marker. A lone `*` still auto-pairs so italic/bold typing keeps its current
 // ergonomics. Once the next input is a space at a whitespace-only line
@@ -8,7 +8,7 @@ import { EditorView } from '@codemirror/view';
 // closer so `*|*` becomes `* |` before item text is entered.
 export const startAsteriskList = Prec.highest(EditorView.inputHandler.of(startAsteriskListInput));
 export function startAsteriskListInput(view, from, to, text) {
-    if (text !== ' ' || from !== to)
+    if (text !== " " || from !== to)
         return false;
     const { state } = view;
     if (state.selection.ranges.length !== 1 || !state.selection.main.empty) {
@@ -21,16 +21,16 @@ export function startAsteriskListInput(view, from, to, text) {
     // remains emphasis and falls through untouched.
     if (!/^(?:[ \t]{0,3}>[ \t]?)*[ \t]*\*$/.test(before))
         return false;
-    if (state.doc.sliceString(from, from + 1) !== '*')
+    if (state.doc.sliceString(from, from + 1) !== "*")
         return false;
     // Four-space indented and fenced code can legitimately begin with `* `.
     // Do not reinterpret those literal characters as a Markdown list marker.
     for (let node = syntaxTree(state).resolveInner(from, -1); node; node = node.parent) {
-        if (node.name === 'CodeBlock' || node.name === 'FencedCode')
+        if (node.name === "CodeBlock" || node.name === "FencedCode")
             return false;
     }
     view.dispatch({
-        changes: { from, to: from + 1, insert: ' ' },
+        changes: { from, to: from + 1, insert: " " },
         selection: { anchor: from + 1 },
     });
     return true;
@@ -52,7 +52,7 @@ export function startAsteriskListInput(view, from, to, text) {
 // Runs at Prec.high so it beats closeBrackets' input handler when
 // both want to act on the keystroke.
 export const extendEmphasisPair = Prec.high(EditorView.inputHandler.of((view, from, to, text) => {
-    if (text !== '*' && text !== '_')
+    if (text !== "*" && text !== "_")
         return false;
     const { state } = view;
     const sel = state.selection.main;
@@ -86,7 +86,7 @@ export const extendEmphasisPair = Prec.high(EditorView.inputHandler.of((view, fr
 // typing ``` is likely the user's manual closing fence.
 export const autoCloseCodeFence = Prec.highest(EditorView.inputHandler.of(autoCloseCodeFenceInput));
 export function autoCloseCodeFenceInput(view, from, to, text) {
-    if (text !== '`' || from !== to)
+    if (text !== "`" || from !== to)
         return false;
     const { state } = view;
     const line = state.doc.lineAt(from);
@@ -95,13 +95,13 @@ export function autoCloseCodeFenceInput(view, from, to, text) {
     const match = before.match(/^(\s{0,3})``$/);
     if (!match)
         return false;
-    if (after !== '' && after !== '`')
+    if (after !== "" && after !== "`")
         return false;
     if (isInsideFencedCodeBeforeLine(state.doc.toString(), line.number))
         return false;
     const indent = match[1];
-    const replaceTo = after === '`' ? from + 1 : from;
-    const insert = '`\n' + indent + '```';
+    const replaceTo = after === "`" ? from + 1 : from;
+    const insert = "`\n" + indent + "```";
     view.dispatch({
         changes: { from, to: replaceTo, insert },
         selection: { anchor: from + 1 },
@@ -109,7 +109,7 @@ export function autoCloseCodeFenceInput(view, from, to, text) {
     return true;
 }
 function isInsideFencedCodeBeforeLine(doc, lineNumber) {
-    const lines = doc.split('\n');
+    const lines = doc.split("\n");
     let marker = null;
     let markerLength = 0;
     for (let i = 0; i < lineNumber - 1; i++) {

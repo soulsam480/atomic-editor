@@ -1,5 +1,5 @@
-import { EditorState, Facet } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
+import { EditorState, Facet } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 // Read-only ("reading") mode.
 //
 // The live-preview reveal already keys off `view.hasFocus` + the
@@ -41,7 +41,7 @@ export function readOnlyExtension(ro) {
         EditorView.editable.of(!ro),
         EditorState.readOnly.of(ro),
         readOnlyFacet.of(ro),
-        ro ? EditorView.editorAttributes.of({ class: 'cm-atomic-readonly' }) : [],
+        ro ? EditorView.editorAttributes.of({ class: "cm-atomic-readonly" }) : [],
     ];
 }
 //# sourceMappingURL=read-only.js.map

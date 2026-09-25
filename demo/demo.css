@@ -8,7 +8,7 @@
  * themes the editor. The dark values mirror the package defaults; the
  * light values mirror the package's `[data-theme="light"]` block. */
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   --atomic-editor-fg: #dcddde;
   --atomic-editor-fg-muted: #888c94;
   --atomic-editor-fg-faint: #5f636b;
@@ -27,7 +27,7 @@
   --atomic-editor-selection-bg: color-mix(in srgb, #7c3aed 45%, transparent);
 }
 
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   --atomic-editor-fg: #24292f;
   --atomic-editor-fg-muted: #57606a;
   --atomic-editor-fg-faint: #8c959f;
@@ -48,9 +48,9 @@
   /* IBM Plex Mono powers in-editor code (and the source pane) via the
    * editor's own font token; Martian Mono is the instrument/wordmark
    * face used only in the chrome. */
-  --atomic-editor-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  --lab-display: 'Martian Mono', 'IBM Plex Mono', ui-monospace, monospace;
-  --lab-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --atomic-editor-font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --lab-display: "Martian Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --lab-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   --lab-grid: color-mix(in srgb, var(--atomic-editor-fg) 10%, transparent);
   --lab-accent-tint: color-mix(in srgb, var(--atomic-editor-accent) 15%, transparent);
   --atomic-editor-radius: 6px;
@@ -65,7 +65,12 @@ body,
 }
 
 body {
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   background: var(--atomic-editor-bg);
   color: var(--atomic-editor-fg);
   -webkit-font-smoothing: antialiased;
@@ -146,7 +151,10 @@ body {
   border: 1px solid var(--atomic-editor-border);
   border-radius: var(--atomic-editor-radius);
   cursor: pointer;
-  transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    border-color 0.14s ease;
 }
 
 .demo-icon-btn:hover {
@@ -244,7 +252,9 @@ a.demo-pill:hover {
   cursor: pointer;
   border-right: 1px solid var(--atomic-editor-border);
   white-space: nowrap;
-  transition: background-color 0.14s ease, color 0.14s ease;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease;
 }
 
 .demo-segmented button:last-child {
@@ -286,7 +296,11 @@ a.demo-pill:hover {
   font-size: 0.7rem;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease, transform 0.08s ease;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    border-color 0.14s ease,
+    transform 0.08s ease;
 }
 
 .demo-chip:hover {
@@ -329,7 +343,10 @@ a.demo-pill:hover {
   font-size: 0.7rem;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    border-color 0.14s ease;
 }
 
 .demo-btn:hover {
@@ -366,12 +383,16 @@ a.demo-pill:hover {
 }
 
 .demo-spotlight .demo-chip {
-  border-color: color-mix(in srgb, var(--atomic-editor-accent) 38%, var(--atomic-editor-border) 62%);
+  border-color: color-mix(
+    in srgb,
+    var(--atomic-editor-accent) 38%,
+    var(--atomic-editor-border) 62%
+  );
   color: var(--atomic-editor-accent-bright);
 }
 
 .demo-spotlight .demo-chip::before {
-  content: '→';
+  content: "→";
   margin-right: 0.4em;
   opacity: 0.6;
 }
@@ -427,7 +448,7 @@ a.demo-pill:hover {
 }
 
 .demo-editor-pane .cm-scroller::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   bottom: 0;

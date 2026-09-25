@@ -1,5 +1,5 @@
-import { EditorState, Facet, type Extension } from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
+import { EditorState, Facet, type Extension } from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
 
 // Read-only ("reading") mode.
 //
@@ -44,6 +44,6 @@ export function readOnlyExtension(ro: boolean): Extension {
     EditorView.editable.of(!ro),
     EditorState.readOnly.of(ro),
     readOnlyFacet.of(ro),
-    ro ? EditorView.editorAttributes.of({ class: 'cm-atomic-readonly' }) : [],
+    ro ? EditorView.editorAttributes.of({ class: "cm-atomic-readonly" }) : [],
   ];
 }

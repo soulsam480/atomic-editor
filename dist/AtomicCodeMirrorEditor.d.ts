@@ -1,12 +1,11 @@
-import { type PropType, type ShallowRef } from 'vue';
-import type { LanguageDescription } from '@codemirror/language';
-import type { Extension } from '@codemirror/state';
-import { type AtomicCodeMirrorEditorHandle } from './editor-runtime';
+import { type PropType, type ShallowRef } from "vue";
+import type { LanguageDescription } from "@codemirror/language";
+import type { Extension } from "@codemirror/state";
+import { type AtomicCodeMirrorEditorHandle } from "./editor-runtime";
 export type { AtomicCodeMirrorEditorHandle };
 export interface AtomicCodeMirrorEditorProps {
     markdownSource: string;
     documentId?: string;
-    initialSearchText?: string | null;
     initialRevealText?: string | null;
     blurEditorOnMount?: boolean;
     readOnly?: boolean;
@@ -22,14 +21,13 @@ export interface AtomicCodeMirrorEditorProps {
  * component `ref` and read methods off `handle.value`.
  *
  * ```ts
- * const { handle, setHandle } = useAtomicEditorHandle();
- * h(AtomicCodeMirrorEditor, { ref: setHandle, markdownSource: '# hi' });
- * handle.value?.openSearch();
+ * const { handle } = useAtomicEditorHandle();
+ * h(AtomicCodeMirrorEditor, { ref: handle, markdownSource: '# hi' });
+ * handle.value?.revealText('needle');
  * ```
  */
 export declare function useAtomicEditorHandle(): {
     handle: ShallowRef<AtomicCodeMirrorEditorHandle | null>;
-    setHandle: (instance: unknown) => void;
 };
 /**
  * Vue wrapper around a CodeMirror 6 editor configured for markdown
@@ -49,10 +47,6 @@ export declare const AtomicCodeMirrorEditor: import("vue").DefineComponent<impor
     documentId: {
         type: StringConstructor;
         default: undefined;
-    };
-    initialSearchText: {
-        type: PropType<string | null>;
-        default: null;
     };
     initialRevealText: {
         type: PropType<string | null>;
@@ -88,10 +82,6 @@ export declare const AtomicCodeMirrorEditor: import("vue").DefineComponent<impor
         type: StringConstructor;
         default: undefined;
     };
-    initialSearchText: {
-        type: PropType<string | null>;
-        default: null;
-    };
     initialRevealText: {
         type: PropType<string | null>;
         default: null;
@@ -117,7 +107,6 @@ export declare const AtomicCodeMirrorEditor: import("vue").DefineComponent<impor
     onMarkdownChange?: ((markdown: string) => any) | undefined;
 }>, {
     documentId: string;
-    initialSearchText: string | null;
     initialRevealText: string | null;
     blurEditorOnMount: boolean;
     readOnly: boolean;

@@ -1,11 +1,11 @@
-import { defineConfig } from 'vite';
-import path from 'path';
-import { readFileSync } from 'fs';
+import { defineConfig } from "vite";
+import path from "path";
+import { readFileSync } from "fs";
 
 // Pull the real package version so the demo's version pill is injected
 // at build time and can never drift from package.json by hand.
 const pkgVersion = (
-  JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8')) as {
+  JSON.parse(readFileSync(path.resolve(__dirname, "package.json"), "utf-8")) as {
     version: string;
   }
 ).version;
@@ -15,14 +15,14 @@ const pkgVersion = (
 // package itself does not use Vite to build — `tsc -p tsconfig.build.json`
 // emits `dist/`. See `package.json` scripts.
 export default defineConfig({
-  root: path.resolve(__dirname, 'demo'),
+  root: path.resolve(__dirname, "demo"),
   define: {
     __APP_VERSION__: JSON.stringify(pkgVersion),
   },
   // GitHub Pages serves the demo under a subpath — the deploy workflow
   // sets VITE_BASE so asset URLs get the right prefix. Local dev
   // (no env var) falls back to `/`.
-  base: process.env.VITE_BASE ?? '/',
+  base: process.env.VITE_BASE ?? "/",
   resolve: {
     // Alias package self-imports so demo code reads exactly like a
     // consumer's would, without needing a link or a publish step.
@@ -31,16 +31,16 @@ export default defineConfig({
     alias: [
       {
         find: /^@atomic-editor\/editor$/,
-        replacement: path.resolve(__dirname, 'src/index.ts'),
+        replacement: path.resolve(__dirname, "src/index.ts"),
       },
       {
         find: /^@atomic-editor\/editor\/styles\.css$/,
-        replacement: path.resolve(__dirname, 'src/styles/inline-preview.css'),
+        replacement: path.resolve(__dirname, "src/styles/inline-preview.css"),
       },
     ],
   },
   build: {
-    outDir: path.resolve(__dirname, 'demo-dist'),
+    outDir: path.resolve(__dirname, "demo-dist"),
     emptyOutDir: true,
   },
   server: {

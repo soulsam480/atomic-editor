@@ -1,46 +1,36 @@
-export {
-  AtomicCodeMirrorEditor,
-  useAtomicEditorHandle,
-} from './AtomicCodeMirrorEditor';
+export { AtomicCodeMirrorEditor, useAtomicEditorHandle } from "./AtomicCodeMirrorEditor";
 export type {
   AtomicCodeMirrorEditorHandle,
   AtomicCodeMirrorEditorProps,
-} from './AtomicCodeMirrorEditor';
+} from "./AtomicCodeMirrorEditor";
 
 // Framework-agnostic runtime. Lets consumers mount a bare CM6 editor
 // with the same extension set, control it imperatively, and skip Vue.
-export { createEditorRuntime } from './editor-runtime';
-export type {
-  CreateEditorRuntimeOptions,
-  EditorRuntime,
-} from './editor-runtime';
+export { createEditorRuntime } from "./editor-runtime";
+export type { CreateEditorRuntimeOptions, EditorRuntime } from "./editor-runtime";
 
 // Individual extension factories. Exposed so consumers can compose a
 // stripped-down editor, bisect regressions, or cherry-pick a single
 // feature (tables, inline-preview, image blocks) into a different
 // editor setup. The default `AtomicCodeMirrorEditor` is still the
 // recommended entry point.
-export { inlinePreview } from './inline-preview';
-export type { InlinePreviewConfig } from './inline-preview';
-export { highlightMarkdown } from './highlight';
-export { imageBlocks } from './image-blocks';
-export { tables } from './table-widget';
-export type { TablesConfig } from './table-widget';
-export { wikiLinks } from './wiki-links';
+export { inlinePreview } from "./inline-preview";
+export type { InlinePreviewConfig } from "./inline-preview";
+export { highlightMarkdown } from "./highlight";
+export { imageBlocks } from "./image-blocks";
+export { tables } from "./table-widget";
+export type { TablesConfig } from "./table-widget";
+export { wikiLinks } from "./wiki-links";
 export type {
   WikiLinkResolvedTarget,
   WikiLinkStatus,
   WikiLinkSuggestion,
   WikiLinksConfig,
-} from './wiki-links';
-export { atomicEditorTheme, atomicMarkdownSyntax } from './atomic-theme';
-export {
-  autoCloseCodeFence,
-  extendEmphasisPair,
-  startAsteriskList,
-} from './edit-helpers';
+} from "./wiki-links";
+export { atomicEditorTheme, atomicMarkdownSyntax } from "./atomic-theme";
+export { autoCloseCodeFence, extendEmphasisPair, startAsteriskList } from "./edit-helpers";
 // Read-only ("reading") mode. `AtomicCodeMirrorEditor` exposes this via
 // its `readOnly` prop / `setReadOnly` handle; these are for consumers
 // composing a custom editor who want to drive the mode through their
 // own `Compartment`.
-export { readOnlyExtension, readOnlyFacet } from './read-only';
+export { readOnlyExtension, readOnlyFacet } from "./read-only";

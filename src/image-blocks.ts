@@ -1,18 +1,13 @@
-import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
+import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
 import {
   StateField,
   type EditorState,
   type Extension,
   type Range,
   type Transaction,
-} from '@codemirror/state';
-import {
-  Decoration,
-  EditorView,
-  WidgetType,
-  type DecorationSet,
-} from '@codemirror/view';
-import { treeGrowthEffect, treeProgressPlugin } from './tree-progress';
+} from "@codemirror/state";
+import { Decoration, EditorView, WidgetType, type DecorationSet } from "@codemirror/view";
+import { treeGrowthEffect, treeProgressPlugin } from "./tree-progress";
 
 // Image blocks.
 //
@@ -49,7 +44,10 @@ import { treeGrowthEffect, treeProgressPlugin } from './tree-progress';
 const dimensionCache = new Map<string, { w: number; h: number }>();
 
 class ImageWidget extends WidgetType {
-  constructor(readonly src: string, readonly alt: string) {
+  constructor(
+    readonly src: string,
+    readonly alt: string,
+  ) {
     super();
   }
 
@@ -58,12 +56,12 @@ class ImageWidget extends WidgetType {
   }
 
   toDOM(view: EditorView): HTMLElement {
-    const wrap = document.createElement('div');
-    wrap.className = 'cm-atomic-image';
-    const img = document.createElement('img');
+    const wrap = document.createElement("div");
+    wrap.className = "cm-atomic-image";
+    const img = document.createElement("img");
     img.src = this.src;
     img.alt = this.alt;
-    img.loading = 'lazy';
+    img.loading = "lazy";
     // Set intrinsic dims from the cache so the widget reserves the
     // right box before the image decodes — prevents the remount +
     // resize cycle that halts iOS momentum scroll. On first-ever
@@ -76,7 +74,7 @@ class ImageWidget extends WidgetType {
       img.width = cached.w;
       img.height = cached.h;
     } else {
-      img.addEventListener('load', () => {
+      img.addEventListener("load", () => {
         if (img.naturalWidth > 0 && img.naturalHeight > 0) {
           dimensionCache.set(this.src, {
             w: img.naturalWidth,
@@ -106,14 +104,14 @@ class ImageWidget extends WidgetType {
         scrollIntoView: false,
       });
     };
-    wrap.addEventListener('mousedown', onPointer);
+    wrap.addEventListener("mousedown", onPointer);
     return wrap;
   }
 
   // Block CM6's own mouse handling so our listener above is the sole
   // thing deciding where the caret goes.
   ignoreEvent(event: Event): boolean {
-    return event.type === 'mousedown' || event.type === 'click';
+    return event.type === "mousedown" || event.type === "click";
   }
 }
 
@@ -126,19 +124,18 @@ function buildImageBlocks(state: EditorState): DecorationSet {
   // `![alt](url)` text forever — the StateField only rebuilds on
   // doc change, not on parser advance. 200ms is a generous
   // upper bound; typical atoms finish in well under 10ms.
-  const tree =
-    ensureSyntaxTree(state, state.doc.length, 200) ?? syntaxTree(state);
+  const tree = ensureSyntaxTree(state, state.doc.length, 200) ?? syntaxTree(state);
 
   tree.iterate({
     enter: (node) => {
-      if (node.name !== 'Image') return;
+      if (node.name !== "Image") return;
       // Skip Images inside tables — the table widget renders them
       // as inline `<img>` elements in their cells. Emitting a
       // block widget below the table row would double-render and
       // the source it points at is hidden behind the table's
       // block-replace anyway.
       for (let p = node.node.parent; p; p = p.parent) {
-        if (p.name === 'Table') return;
+        if (p.name === "Table") return;
       }
       // Slice the whole image source and regex out src / alt. This
       // handles the common shapes — `![alt](url)` and
@@ -199,7 +196,7 @@ function changeAffectsImages(tr: Transaction, existing: DecorationSet): boolean 
     const startLine = state.doc.lineAt(fromB);
     const endLine = toB > startLine.to ? state.doc.lineAt(toB) : startLine;
     for (let n = startLine.number; n <= endLine.number; n++) {
-      if (state.doc.line(n).text.includes('![')) {
+      if (state.doc.line(n).text.includes("![")) {
         affected = true;
         break;
       }

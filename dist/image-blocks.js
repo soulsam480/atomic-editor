@@ -1,7 +1,7 @@
-import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
-import { StateField, } from '@codemirror/state';
-import { Decoration, EditorView, WidgetType, } from '@codemirror/view';
-import { treeGrowthEffect, treeProgressPlugin } from './tree-progress';
+import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
+import { StateField, } from "@codemirror/state";
+import { Decoration, EditorView, WidgetType } from "@codemirror/view";
+import { treeGrowthEffect, treeProgressPlugin } from "./tree-progress";
 // Image blocks.
 //
 // When a markdown image (`![alt](url)`) appears in the doc, we render
@@ -54,12 +54,12 @@ class ImageWidget extends WidgetType {
         return other.src === this.src && other.alt === this.alt;
     }
     toDOM(view) {
-        const wrap = document.createElement('div');
-        wrap.className = 'cm-atomic-image';
-        const img = document.createElement('img');
+        const wrap = document.createElement("div");
+        wrap.className = "cm-atomic-image";
+        const img = document.createElement("img");
         img.src = this.src;
         img.alt = this.alt;
-        img.loading = 'lazy';
+        img.loading = "lazy";
         // Set intrinsic dims from the cache so the widget reserves the
         // right box before the image decodes — prevents the remount +
         // resize cycle that halts iOS momentum scroll. On first-ever
@@ -73,7 +73,7 @@ class ImageWidget extends WidgetType {
             img.height = cached.h;
         }
         else {
-            img.addEventListener('load', () => {
+            img.addEventListener("load", () => {
                 if (img.naturalWidth > 0 && img.naturalHeight > 0) {
                     dimensionCache.set(this.src, {
                         w: img.naturalWidth,
@@ -103,13 +103,13 @@ class ImageWidget extends WidgetType {
                 scrollIntoView: false,
             });
         };
-        wrap.addEventListener('mousedown', onPointer);
+        wrap.addEventListener("mousedown", onPointer);
         return wrap;
     }
     // Block CM6's own mouse handling so our listener above is the sole
     // thing deciding where the caret goes.
     ignoreEvent(event) {
-        return event.type === 'mousedown' || event.type === 'click';
+        return event.type === "mousedown" || event.type === "click";
     }
 }
 function buildImageBlocks(state) {
@@ -124,7 +124,7 @@ function buildImageBlocks(state) {
     const tree = ensureSyntaxTree(state, state.doc.length, 200) ?? syntaxTree(state);
     tree.iterate({
         enter: (node) => {
-            if (node.name !== 'Image')
+            if (node.name !== "Image")
                 return;
             // Skip Images inside tables — the table widget renders them
             // as inline `<img>` elements in their cells. Emitting a
@@ -132,7 +132,7 @@ function buildImageBlocks(state) {
             // the source it points at is hidden behind the table's
             // block-replace anyway.
             for (let p = node.node.parent; p; p = p.parent) {
-                if (p.name === 'Table')
+                if (p.name === "Table")
                     return;
             }
             // Slice the whole image source and regex out src / alt. This
@@ -193,7 +193,7 @@ function changeAffectsImages(tr, existing) {
         const startLine = state.doc.lineAt(fromB);
         const endLine = toB > startLine.to ? state.doc.lineAt(toB) : startLine;
         for (let n = startLine.number; n <= endLine.number; n++) {
-            if (state.doc.line(n).text.includes('![')) {
+            if (state.doc.line(n).text.includes("![")) {
                 affected = true;
                 break;
             }

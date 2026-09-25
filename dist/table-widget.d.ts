@@ -1,4 +1,4 @@
-import { Facet, type Extension } from '@codemirror/state';
+import { Facet, type Extension } from "@codemirror/state";
 interface TableModel {
     header: string[];
     rows: string[][];
@@ -6,24 +6,24 @@ interface TableModel {
 export declare function splitRowCells(line: string): string[];
 export declare function serializeTable(model: TableModel): string;
 type CellToken = {
-    type: 'text';
+    type: "text";
     text: string;
 } | {
-    type: 'strong';
-    delim: '**' | '__';
+    type: "strong";
+    delim: "**" | "__";
     children: CellToken[];
 } | {
-    type: 'em';
-    delim: '*' | '_';
+    type: "em";
+    delim: "*" | "_";
     children: CellToken[];
 } | {
-    type: 'strike';
+    type: "strike";
     children: CellToken[];
 } | {
-    type: 'highlight';
+    type: "highlight";
     children: CellToken[];
 } | {
-    type: 'link';
+    type: "link";
     textChildren: CellToken[];
     url: string;
 };

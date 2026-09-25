@@ -21,12 +21,5 @@
       "@atomic-editor/editor": ["./src/index.ts"]
     }
   },
-  "include": [
-    "src",
-    "demo",
-    "tests",
-    "playwright.config.ts",
-    "vite.config.ts",
-    "vitest.config.ts"
-  ]
+  "include": ["src", "demo", "tests", "playwright.config.ts", "vite.config.ts", "vitest.config.ts"]
 }

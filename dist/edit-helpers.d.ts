@@ -1,4 +1,4 @@
-import { EditorView } from '@codemirror/view';
+import { EditorView } from "@codemirror/view";
 export declare const startAsteriskList: import("@codemirror/state").Extension;
 export declare function startAsteriskListInput(view: EditorView, from: number, to: number, text: string): boolean;
 export declare const extendEmphasisPair: import("@codemirror/state").Extension;

@@ -1,11 +1,11 @@
-import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
-import { EditorSelection, Prec, StateEffect, StateField, } from '@codemirror/state';
-import { Decoration, EditorView, ViewPlugin, WidgetType, keymap, } from '@codemirror/view';
-import { treeGrowthEffect, treeProgressPlugin } from './tree-progress';
-import { readOnlyFacet } from './read-only';
+import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
+import { EditorSelection, Prec, StateEffect, StateField, } from "@codemirror/state";
+import { Decoration, EditorView, ViewPlugin, WidgetType, keymap, } from "@codemirror/view";
+import { treeGrowthEffect, treeProgressPlugin } from "./tree-progress";
+import { readOnlyFacet } from "./read-only";
 function defaultOnLinkClick(url) {
     try {
-        window.open(url, '_blank', 'noopener,noreferrer');
+        window.open(url, "_blank", "noopener,noreferrer");
     }
     catch {
         // window.open can throw in sandboxed iframes etc. — silent failure
@@ -29,7 +29,7 @@ function linkIconHitTarget(event, root) {
     const target = event.target;
     if (!(target instanceof Element))
         return null;
-    const linkEl = target.closest('.cm-atomic-link');
+    const linkEl = target.closest(".cm-atomic-link");
     if (!linkEl || (root && !root.contains(linkEl)))
         return null;
     // The icon is a `::after` pseudo-element, so it doesn't have its own
@@ -55,7 +55,7 @@ function linkElementFromEvent(event, root) {
     const target = event.target;
     if (!(target instanceof Element))
         return null;
-    const linkEl = target.closest('.cm-atomic-link');
+    const linkEl = target.closest(".cm-atomic-link");
     if (!linkEl || (root && !root.contains(linkEl)))
         return null;
     return linkEl;
@@ -151,57 +151,57 @@ const freezeMousePlugin = ViewPlugin.fromClass(class {
         // BEFORE CM6's own pointerdown handler runs its selection logic.
         // Without capture, CM6's listener can win the order race and
         // rebuild decorations (revealing `# `/`**`) before we freeze.
-        view.dom.addEventListener('pointerdown', this.onDown, true);
-        window.addEventListener('pointerup', this.onUp);
-        window.addEventListener('pointercancel', this.onUp);
+        view.dom.addEventListener("pointerdown", this.onDown, true);
+        window.addEventListener("pointerup", this.onUp);
+        window.addEventListener("pointercancel", this.onUp);
     }
     update(_) {
         // No-op — we don't drive freeze off doc changes.
     }
     destroy() {
-        this.view.dom.removeEventListener('pointerdown', this.onDown, true);
-        window.removeEventListener('pointerup', this.onUp);
-        window.removeEventListener('pointercancel', this.onUp);
+        this.view.dom.removeEventListener("pointerdown", this.onDown, true);
+        window.removeEventListener("pointerup", this.onUp);
+        window.removeEventListener("pointercancel", this.onUp);
         if (this.releaseTimer != null)
             window.clearTimeout(this.releaseTimer);
     }
 });
 // ---- decoration building --------------------------------------------------
 const LINE_CLASS_BY_BLOCK = {
-    ATXHeading1: 'cm-atomic-h1',
-    ATXHeading2: 'cm-atomic-h2',
-    ATXHeading3: 'cm-atomic-h3',
-    ATXHeading4: 'cm-atomic-h4',
-    ATXHeading5: 'cm-atomic-h5',
-    ATXHeading6: 'cm-atomic-h6',
-    SetextHeading1: 'cm-atomic-h1',
-    SetextHeading2: 'cm-atomic-h2',
-    Blockquote: 'cm-atomic-blockquote',
-    FencedCode: 'cm-atomic-fenced-code',
+    ATXHeading1: "cm-atomic-h1",
+    ATXHeading2: "cm-atomic-h2",
+    ATXHeading3: "cm-atomic-h3",
+    ATXHeading4: "cm-atomic-h4",
+    ATXHeading5: "cm-atomic-h5",
+    ATXHeading6: "cm-atomic-h6",
+    SetextHeading1: "cm-atomic-h1",
+    SetextHeading2: "cm-atomic-h2",
+    Blockquote: "cm-atomic-blockquote",
+    FencedCode: "cm-atomic-fenced-code",
 };
 const HIDEABLE_SYNTAX = new Set([
-    'HeaderMark',
-    'EmphasisMark',
-    'CodeMark',
-    'CodeInfo',
-    'LinkMark',
-    'LinkTitle',
-    'StrikethroughMark',
-    'HighlightMark',
-    'QuoteMark',
+    "HeaderMark",
+    "EmphasisMark",
+    "CodeMark",
+    "CodeInfo",
+    "LinkMark",
+    "LinkTitle",
+    "StrikethroughMark",
+    "HighlightMark",
+    "QuoteMark",
 ]);
 // Children of a Link node whose visibility follows the link-scoped
 // rule (cursor-inside-link) instead of the default line-based rule.
 // The same token names can appear under an Image node — those stay
 // on the line-based rule because images are a different UX surface.
-const LINK_CHILD_SYNTAX = new Set(['LinkMark', 'URL', 'LinkTitle']);
+const LINK_CHILD_SYNTAX = new Set(["LinkMark", "URL", "LinkTitle"]);
 const INLINE_MARK_CLASS = {
-    StrongEmphasis: 'cm-atomic-strong',
-    Emphasis: 'cm-atomic-em',
-    InlineCode: 'cm-atomic-inline-code',
-    Strikethrough: 'cm-atomic-strike',
-    Highlight: 'cm-atomic-highlight',
-    Link: 'cm-atomic-link',
+    StrongEmphasis: "cm-atomic-strong",
+    Emphasis: "cm-atomic-em",
+    InlineCode: "cm-atomic-inline-code",
+    Strikethrough: "cm-atomic-strike",
+    Highlight: "cm-atomic-highlight",
+    Link: "cm-atomic-link",
 };
 // A Link can contain two URL nodes when its visible label is itself a
 // URL: `[https://label](https://destination)`. Only the node after the
@@ -209,13 +209,11 @@ const INLINE_MARK_CLASS = {
 // every URL under Link as a destination makes the visible label vanish.
 function linkDestinationUrl(link, doc) {
     const labelClose = link
-        .getChildren('LinkMark')
-        .find((mark) => doc.sliceString(mark.from, mark.to) === ']');
+        .getChildren("LinkMark")
+        .find((mark) => doc.sliceString(mark.from, mark.to) === "]");
     if (!labelClose)
         return null;
-    return (link
-        .getChildren('URL')
-        .find((url) => url.from >= labelClose.to) ?? null);
+    return link.getChildren("URL").find((url) => url.from >= labelClose.to) ?? null;
 }
 class BulletWidget extends WidgetType {
     eq() {
@@ -226,9 +224,9 @@ class BulletWidget extends WidgetType {
         // uniform 1.2em inline-block alcove shared by bullets, task
         // checkboxes, and ordered-list numbers. `.cm-atomic-bullet`
         // layers on bullet-specific color / weight.
-        const span = document.createElement('span');
-        span.className = 'cm-atomic-list-marker cm-atomic-bullet';
-        span.textContent = '•';
+        const span = document.createElement("span");
+        span.className = "cm-atomic-list-marker cm-atomic-bullet";
+        span.textContent = "•";
         return span;
     }
     ignoreEvent() {
@@ -256,23 +254,23 @@ class TaskCheckboxWidget extends WidgetType {
         // selectors like `input.cm-atomic-task-checkbox` still work
         // (a wrapper span broke a Playwright probe that targets the
         // input by its class).
-        const input = document.createElement('input');
-        input.type = 'checkbox';
+        const input = document.createElement("input");
+        input.type = "checkbox";
         input.checked = this.checked;
-        input.className = 'cm-atomic-list-marker cm-atomic-task-checkbox';
-        input.setAttribute('contenteditable', 'false');
-        input.addEventListener('mousedown', (e) => {
+        input.className = "cm-atomic-list-marker cm-atomic-task-checkbox";
+        input.setAttribute("contenteditable", "false");
+        input.addEventListener("mousedown", (e) => {
             e.preventDefault();
             e.stopPropagation();
         });
-        input.addEventListener('click', (e) => {
+        input.addEventListener("click", (e) => {
             e.preventDefault();
             e.stopPropagation();
             const pos = view.posAtDOM(input);
             if (pos < 0)
                 return;
             const current = view.state.doc.sliceString(pos, pos + 3);
-            const next = /\[x\]/i.test(current) ? '[ ]' : '[x]';
+            const next = /\[x\]/i.test(current) ? "[ ]" : "[x]";
             if (current === next)
                 return;
             view.dispatch({ changes: { from: pos, to: pos + 3, insert: next } });
@@ -280,7 +278,7 @@ class TaskCheckboxWidget extends WidgetType {
         return input;
     }
     ignoreEvent(event) {
-        return event.type === 'mousedown' || event.type === 'click';
+        return event.type === "mousedown" || event.type === "click";
     }
 }
 // ViewPlugin-sourced Decoration.replace ranges are forbidden from
@@ -321,7 +319,7 @@ const LIST_ALCOVE_EM = 1.2;
 const LIST_LEVEL_EM = 0.6;
 function nearestListItem(node) {
     for (let current = node; current; current = current.parent) {
-        if (current.name === 'ListItem')
+        if (current.name === "ListItem")
             return current;
     }
     return null;
@@ -329,13 +327,13 @@ function nearestListItem(node) {
 function listItemDepth(item) {
     let depth = 0;
     for (let parent = item.parent; parent; parent = parent.parent) {
-        if (parent.name === 'ListItem')
+        if (parent.name === "ListItem")
             depth++;
     }
     return depth;
 }
 function sameListItem(a, b) {
-    return a?.name === 'ListItem' && a.from === b.from && a.to === b.to;
+    return a?.name === "ListItem" && a.from === b.from && a.to === b.to;
 }
 function buildInlineDecorations(view) {
     const { state } = view;
@@ -396,7 +394,7 @@ function buildInlineDecorations(view) {
     // its cost scales with document size.)
     tree.iterate({
         enter: (node) => {
-            if (node.name === 'FencedCode') {
+            if (node.name === "FencedCode") {
                 const firstLine = doc.lineAt(node.from).number;
                 const lastLine = doc.lineAt(node.to).number;
                 let anyActive = false;
@@ -411,7 +409,7 @@ function buildInlineDecorations(view) {
                         activeLines.add(n);
                 }
             }
-            if (node.name === 'Link' && view.hasFocus) {
+            if (node.name === "Link" && view.hasFocus) {
                 for (const range of state.selection.ranges) {
                     // Inclusive overlap: cursor sitting exactly on either
                     // boundary counts as inside, matching the UX where the
@@ -444,10 +442,10 @@ function buildInlineDecorations(view) {
                 let shouldHide;
                 if (LINK_CHILD_SYNTAX.has(node.name)) {
                     let parent = node.node.parent;
-                    while (parent && parent.name !== 'Link' && parent.name !== 'Image') {
+                    while (parent && parent.name !== "Link" && parent.name !== "Image") {
                         parent = parent.parent;
                     }
-                    if (parent && parent.name === 'Link') {
+                    if (parent && parent.name === "Link") {
                         shouldHide = !activeLinkStarts.has(parent.from);
                     }
                     else {
@@ -459,23 +457,22 @@ function buildInlineDecorations(view) {
                 }
                 if (shouldHide) {
                     let hideTo = node.to;
-                    if (node.name === 'HeaderMark' || node.name === 'QuoteMark') {
-                        while (hideTo < doc.length && doc.sliceString(hideTo, hideTo + 1) === ' ') {
+                    if (node.name === "HeaderMark" || node.name === "QuoteMark") {
+                        while (hideTo < doc.length && doc.sliceString(hideTo, hideTo + 1) === " ") {
                             hideTo++;
                         }
                     }
                     pushReplace(ranges, doc, node.from, hideTo);
                 }
             }
-            if (node.name === 'URL' && node.from < node.to) {
+            if (node.name === "URL" && node.from < node.to) {
                 const parent = node.node.parent;
-                if (parent?.name === 'Link') {
+                if (parent?.name === "Link") {
                     // A URL in the label is visible content. A URL after the
                     // closing `]` is destination syntax and follows the existing
                     // cursor-inside-this-link reveal rule—not whole-line activity.
                     const destination = linkDestinationUrl(parent, doc);
-                    if (destination?.from === node.from &&
-                        !activeLinkStarts.has(parent.from)) {
+                    if (destination?.from === node.from && !activeLinkStarts.has(parent.from)) {
                         pushReplace(ranges, doc, node.from, node.to);
                     }
                 }
@@ -484,7 +481,7 @@ function buildInlineDecorations(view) {
                     // content, not syntax. Give them the same styling and icon
                     // hit target as explicit links while leaving their text in
                     // the document flow on inactive lines.
-                    ranges.push(Decoration.mark({ class: 'cm-atomic-link' }).range(node.from, node.to));
+                    ranges.push(Decoration.mark({ class: "cm-atomic-link" }).range(node.from, node.to));
                 }
             }
             // Backslash escapes: `\.`, `\*`, `\(`, etc. RSS-to-markdown
@@ -494,13 +491,13 @@ function buildInlineDecorations(view) {
             // escaped character remains visible — mirrors how Obsidian
             // renders escapes. The Escape node spans both characters
             // (`\` + escaped char), so we only replace the first position.
-            if (node.name === 'Escape' && node.to - node.from >= 2) {
+            if (node.name === "Escape" && node.to - node.from >= 2) {
                 const lineNum = doc.lineAt(node.from).number;
                 if (!activeLines.has(lineNum)) {
                     pushReplace(ranges, doc, node.from, node.from + 1);
                 }
             }
-            if (node.name === 'ListMark' && node.from < node.to) {
+            if (node.name === "ListMark" && node.from < node.to) {
                 const line = doc.lineAt(node.from);
                 // Detect a task item from the line text. ListMark is visited
                 // before the TaskMarker on its line, so a forward single-pass
@@ -551,7 +548,7 @@ function buildInlineDecorations(view) {
                         const markerLine = ownedLine.number === line.number;
                         ranges.push(Decoration.line({
                             attributes: {
-                                style: `padding-left: ${padding}em; text-indent: ${markerLine ? `-${LIST_ALCOVE_EM}` : '0'}em`,
+                                style: `padding-left: ${padding}em; text-indent: ${markerLine ? `-${LIST_ALCOVE_EM}` : "0"}em`,
                             },
                         }).range(ownedLine.from));
                         if (contentFrom > ownedLine.from) {
@@ -566,7 +563,7 @@ function buildInlineDecorations(view) {
                 // For bullets / ordered, include a single trailing space
                 // if present so text flows from padding-left without a
                 // spurious leading space.
-                const hasTrailingSpace = doc.sliceString(node.to, node.to + 1) === ' ';
+                const hasTrailingSpace = doc.sliceString(node.to, node.to + 1) === " ";
                 const markEnd = hasTrailingSpace ? node.to + 1 : node.to;
                 if (taskFrom !== undefined) {
                     // Hide `- ` (ListMark through the space before `[`).
@@ -574,7 +571,7 @@ function buildInlineDecorations(view) {
                 }
                 else {
                     const markText = doc.sliceString(node.from, node.to);
-                    if (markText === '-' || markText === '*' || markText === '+') {
+                    if (markText === "-" || markText === "*" || markText === "+") {
                         // Bullet: substitute with the fixed-width marker
                         // widget, swallowing the trailing space so content
                         // starts precisely at padding-left.
@@ -586,7 +583,7 @@ function buildInlineDecorations(view) {
                         // but mark it so CSS gives it the same fixed-width
                         // alcove. Hide the trailing space separately so the
                         // total marker-plus-space footprint matches ALCOVE.
-                        ranges.push(Decoration.mark({ class: 'cm-atomic-list-marker' }).range(node.from, node.to));
+                        ranges.push(Decoration.mark({ class: "cm-atomic-list-marker" }).range(node.from, node.to));
                         if (hasTrailingSpace) {
                             pushReplace(ranges, doc, node.to, markEnd);
                         }
@@ -599,7 +596,7 @@ function buildInlineDecorations(view) {
             // decorations on TableHeader/TableRow/TableDelimiter would
             // target ranges that are already hidden behind the replace
             // widget, so they're intentionally absent from this builder.
-            if (node.name === 'HorizontalRule') {
+            if (node.name === "HorizontalRule") {
                 // CommonMark HR: a line of `***`, `---`, or `___` (3+, any
                 // spacing between). On inactive lines we hide the characters
                 // and render a horizontal rule via CSS `::after`. On active
@@ -607,11 +604,11 @@ function buildInlineDecorations(view) {
                 // edit the marker without it vanishing.
                 const line = doc.lineAt(node.from);
                 if (!activeLines.has(line.number)) {
-                    ranges.push(Decoration.line({ class: 'cm-atomic-hr' }).range(line.from));
+                    ranges.push(Decoration.line({ class: "cm-atomic-hr" }).range(line.from));
                     pushReplace(ranges, doc, line.from, line.to);
                 }
             }
-            if (node.name === 'Image' && node.from < node.to) {
+            if (node.name === "Image" && node.from < node.to) {
                 const imageLine = doc.lineAt(node.from);
                 const lineNum = imageLine.number;
                 if (!activeLines.has(lineNum)) {
@@ -631,7 +628,7 @@ function buildInlineDecorations(view) {
                     pushReplace(ranges, doc, node.from, node.to);
                 }
             }
-            if (node.name === 'TaskMarker' && node.from < node.to) {
+            if (node.name === "TaskMarker" && node.from < node.to) {
                 const markText = doc.sliceString(node.from, node.to);
                 const checked = /\[x\]/i.test(markText);
                 // Swallow the single trailing space after `[ ]` / `[x]` so the
@@ -639,8 +636,7 @@ function buildInlineDecorations(view) {
                 // markers also swallow their trailing space). Without this the
                 // space stays visible, pushing first-line content to the right
                 // of where wrapped lines start — visible as a 0.3em hang.
-                const hasTrailingSpace = node.to < doc.length &&
-                    doc.sliceString(node.to, node.to + 1) === ' ';
+                const hasTrailingSpace = node.to < doc.length && doc.sliceString(node.to, node.to + 1) === " ";
                 const replaceTo = hasTrailingSpace ? node.to + 1 : node.to;
                 pushReplace(ranges, doc, node.from, replaceTo, {
                     widget: new TaskCheckboxWidget(checked),
@@ -648,7 +644,7 @@ function buildInlineDecorations(view) {
                 if (checked) {
                     const lineNum = doc.lineAt(node.from).number;
                     const line = doc.line(lineNum);
-                    ranges.push(Decoration.line({ class: 'cm-atomic-task-done' }).range(line.from));
+                    ranges.push(Decoration.line({ class: "cm-atomic-task-done" }).range(line.from));
                 }
             }
         },
@@ -682,12 +678,12 @@ function buildInlineDecorations(view) {
 // renders when lezer *does* parse: parent tag's weight / style /
 // decoration plus `processingInstruction`'s faint color).
 const MID_TYPING_DELIMITERS = [
-    { delim: '**', contentCls: 'cm-atomic-strong', delimCls: 'cm-atomic-strong-mark' },
-    { delim: '__', contentCls: 'cm-atomic-strong', delimCls: 'cm-atomic-strong-mark' },
-    { delim: '~~', contentCls: 'cm-atomic-strike', delimCls: 'cm-atomic-strike-mark' },
-    { delim: '==', contentCls: 'cm-atomic-highlight', delimCls: 'cm-atomic-highlight-mark' },
-    { delim: '*', contentCls: 'cm-atomic-em', delimCls: 'cm-atomic-em-mark' },
-    { delim: '_', contentCls: 'cm-atomic-em', delimCls: 'cm-atomic-em-mark' },
+    { delim: "**", contentCls: "cm-atomic-strong", delimCls: "cm-atomic-strong-mark" },
+    { delim: "__", contentCls: "cm-atomic-strong", delimCls: "cm-atomic-strong-mark" },
+    { delim: "~~", contentCls: "cm-atomic-strike", delimCls: "cm-atomic-strike-mark" },
+    { delim: "==", contentCls: "cm-atomic-highlight", delimCls: "cm-atomic-highlight-mark" },
+    { delim: "*", contentCls: "cm-atomic-em", delimCls: "cm-atomic-em-mark" },
+    { delim: "_", contentCls: "cm-atomic-em", delimCls: "cm-atomic-em-mark" },
 ];
 function supplementMidTypingEmphasis(text, lineFrom, localCursor, out) {
     // Track which characters of the line are already "owned" by a
@@ -703,7 +699,7 @@ function supplementMidTypingEmphasis(text, lineFrom, localCursor, out) {
         // the cursor sits between two intra-word underscores (exactly the
         // flicker this feature exists to prevent, inverted). Asterisk
         // delimiters have no such restriction, so only gate underscores.
-        const isUnderscore = delim === '_' || delim === '__';
+        const isUnderscore = delim === "_" || delim === "__";
         let searchFrom = 0;
         while (searchFrom < text.length) {
             const open = indexOfUnconsumed(text, delim, searchFrom, consumed);
@@ -720,9 +716,7 @@ function supplementMidTypingEmphasis(text, lineFrom, localCursor, out) {
                 consumed[i] = 1;
             const contentFrom = open + dLen;
             const contentTo = close;
-            if (contentFrom < contentTo &&
-                localCursor > open &&
-                localCursor < close + dLen) {
+            if (contentFrom < contentTo && localCursor > open && localCursor < close + dLen) {
                 out.push(Decoration.mark({ class: contentCls }).range(lineFrom + contentFrom, lineFrom + contentTo));
                 // Style the delimiter characters to match how lezer's
                 // `EmphasisMark` tokens render when the pattern parses
@@ -811,8 +805,7 @@ const inlinePreviewPlugin = ViewPlugin.fromClass(class {
         // doc nor selection nor focus, so detect the facet flip directly
         // — otherwise reading mode wouldn't repaint into / out of the
         // fully-rendered state.
-        const readOnlyChanged = update.startState.facet(readOnlyFacet) !==
-            update.state.facet(readOnlyFacet);
+        const readOnlyChanged = update.startState.facet(readOnlyFacet) !== update.state.facet(readOnlyFacet);
         if (justUnfroze ||
             update.docChanged ||
             update.selectionSet ||
@@ -847,12 +840,12 @@ function fencedCodeSelectionDecorations(view) {
             from: selection.from,
             to: selection.to,
             enter(node) {
-                if (node.name !== 'FencedCode')
+                if (node.name !== "FencedCode")
                     return;
                 const from = Math.max(node.from, selection.from);
                 const to = Math.min(node.to, selection.to);
                 if (from < to) {
-                    ranges.push(Decoration.mark({ class: 'cm-atomic-fenced-selection' }).range(from, to));
+                    ranges.push(Decoration.mark({ class: "cm-atomic-fenced-selection" }).range(from, to));
                 }
                 return false;
             },
@@ -899,7 +892,7 @@ function insertTightListItem(view) {
     let cursor = tree.resolveInner(from, -1).cursor();
     let inBulletList = false;
     for (;;) {
-        if (cursor.name === 'BulletList') {
+        if (cursor.name === "BulletList") {
             inBulletList = true;
             break;
         }
@@ -930,7 +923,7 @@ function insertTightListItem(view) {
         }
         else {
             view.dispatch({
-                changes: { from: line.from, to: line.to, insert: '' },
+                changes: { from: line.from, to: line.to, insert: "" },
                 selection: EditorSelection.cursor(line.from),
             });
         }
@@ -966,14 +959,12 @@ function makeLinkClickHandler(onLinkClick) {
             const tree = syntaxTree(view.state);
             let node = tree.resolveInner(pos, 1);
             let visibleUrl = null;
-            while (node && node.name !== 'Link') {
-                if (node.name === 'URL')
+            while (node && node.name !== "Link") {
+                if (node.name === "URL")
                     visibleUrl = node;
                 node = node.parent;
             }
-            const urlNode = node
-                ? linkDestinationUrl(node, view.state.doc)
-                : visibleUrl;
+            const urlNode = node ? linkDestinationUrl(node, view.state.doc) : visibleUrl;
             if (!urlNode)
                 return false;
             const url = view.state.doc.sliceString(urlNode.from, urlNode.to);
@@ -1006,7 +997,7 @@ export function inlinePreview(config = {}) {
         // handler, which is registered internally by the `markdown()`
         // extension (not just via the exported markdownKeymap) and
         // otherwise wins precedence.
-        Prec.highest(keymap.of([{ key: 'Enter', run: insertTightListItem }])),
+        Prec.highest(keymap.of([{ key: "Enter", run: insertTightListItem }])),
     ];
 }
 //# sourceMappingURL=inline-preview.js.map

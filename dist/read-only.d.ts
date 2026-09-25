@@ -1,4 +1,4 @@
-import { Facet, type Extension } from '@codemirror/state';
+import { Facet, type Extension } from "@codemirror/state";
 export declare const readOnlyFacet: Facet<boolean, boolean>;
 /**
  * Bundle the CM6 levers that make the editor read-only, plus the

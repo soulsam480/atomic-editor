@@ -91,11 +91,10 @@ identity (`documentId ?? markdownSource`) keys the view so cursor /
 undo state from one document can't bleed into the next.
 
 `onMarkdownChange` and `onLinkClick` are Vue events (`@markdown-change`,
-`@link-click`). The imperative handle (`focus`, `undo`, `redo`,
-`openSearch(query?)`, `closeSearch`, `isSearchOpen`, `getMarkdown`,
-`getContentDOM`, `setReadOnly(readOnly)`, `revealText(query)`) is
-published with `defineExpose`, so parents reach it through a component
-`ref` (see `useAtomicEditorHandle`).
+`@link-click`). The imperative handle (`view`, `focus`, `undo`, `redo`,
+`getMarkdown`, `getContentDOM`, `setReadOnly(readOnly)`,
+`revealText(query)`) is published with `defineExpose`, so parents reach
+it through a component `ref` (see `useAtomicEditorHandle`).
 
 Notable props:
 
@@ -103,11 +102,9 @@ Notable props:
   mount.
 - `onMarkdownChange` — fires for every doc mutation, including
   internal ones (checkbox toggles, tight-list continuations).
-- `initialSearchText` — opens the search panel pre-filled, useful for
-  landing users on a search hit.
 - `readOnly` — toggles a compartment-backed reading mode without
-  remounting, preserving scroll and search state while disabling text
-  and table editing.
+  remounting, preserving scroll state while disabling text and table
+  editing.
 - `onLinkClick` — emitted when the user taps the external-link icon
   while editing, or the rendered link itself in reading mode. With no
   listener the component falls back to `window.open`; listen to
@@ -239,7 +236,8 @@ The widget's `eq()` is structure-only (row × column count), so CM6
 keeps the existing DOM across per-keystroke dispatches and the caret
 survives edits. Cell input re-serializes the whole table and replaces
 the current source range — the range is resolved fresh via `posAtDOM
-+ tree walk` every time, because earlier edits shift the bounds.
+
+- tree walk` every time, because earlier edits shift the bounds.
 
 Wide tables get their own horizontal scroll inside a wrapper
 (`overflow-x: auto`), so the editor's content column isn't forced
@@ -330,14 +328,4 @@ the `@codemirror/lang-*` packages they need and pass them through the
 `codeLanguages` prop; `@codemirror/lang-markdown` lazy-imports each
 grammar on first use, so unrelated grammars never hit the wire.
 
-## Search
 
-The editor wires `@codemirror/search` with a custom minimal panel:
-input + match counter + prev/next/close icon buttons. No replace, no
-case/regex/word toggles — reader-first, not editor-first. Keyboard
-users get the same behavior CM6's `searchKeymap` ships with
-(Cmd/Ctrl+G = next, Shift+same = previous, Escape = close).
-
-External code can detect "is search open?" via the imperative
-handle's `isSearchOpen()` method, which delegates to CM6's
-`searchPanelOpen(state)`.

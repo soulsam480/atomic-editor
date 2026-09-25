@@ -15,7 +15,7 @@
   --atomic-editor-font: Arial, sans-serif;
 }
 
-:root[data-theme='light'] {
+:root[data-theme="light"] {
   --atomic-editor-fg: #24292f;
   --atomic-editor-fg-muted: #57606a;
   --atomic-editor-fg-faint: #8c959f;

@@ -1,4 +1,4 @@
-import { type MarkdownConfig } from '@lezer/markdown';
+import { type MarkdownConfig } from "@lezer/markdown";
 /** Match one complete highlight span using the same rules as the Lezer parser. */
 export declare function matchHighlight(text: string, from: number): {
     contentFrom: number;

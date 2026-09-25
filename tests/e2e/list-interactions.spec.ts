@@ -1,38 +1,33 @@
-import { expect, test } from '@playwright/test';
-import {
-  focusEditor,
-  getMarkdown,
-  loadMarkdown,
-  openHarness,
-} from './support/harness';
+import { expect, test } from "@playwright/test";
+import { focusEditor, getMarkdown, loadMarkdown, openHarness } from "./support/harness";
 
 test.beforeEach(async ({ page }) => openHarness(page));
 
-test('continuation lines follow parsed list depth', async ({ page }) => {
+test("continuation lines follow parsed list depth", async ({ page }) => {
   const markdown = [
-    '- [ ] root no',
-    'root continuation',
-    '  - [ ] nested no',
-    '    nested continuation',
-    '',
-    'separator',
-    '',
-    '   - odd top level',
-    '     odd continuation',
-    '     1. ordered child',
-    '        ordered continuation',
-  ].join('\n');
+    "- [ ] root no",
+    "root continuation",
+    "  - [ ] nested no",
+    "    nested continuation",
+    "",
+    "separator",
+    "",
+    "   - odd top level",
+    "     odd continuation",
+    "     1. ordered child",
+    "        ordered continuation",
+  ].join("\n");
   await loadMarkdown(page, markdown);
 
-  const positions = await page.locator('.cm-content').evaluate((content) => {
+  const positions = await page.locator(".cm-content").evaluate((content) => {
     const leftFor = (text: string) => {
-      const line = Array.from(content.querySelectorAll('.cm-line')).find(
-        (candidate) => (candidate.textContent ?? '').includes(text),
+      const line = Array.from(content.querySelectorAll(".cm-line")).find((candidate) =>
+        (candidate.textContent ?? "").includes(text),
       );
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-        const index = (node.nodeValue ?? '').indexOf(text);
+        const index = (node.nodeValue ?? "").indexOf(text);
         if (index < 0) continue;
         const range = document.createRange();
         range.setStart(node, index);
@@ -42,14 +37,14 @@ test('continuation lines follow parsed list depth', async ({ page }) => {
       return null;
     };
     return {
-      root: leftFor('root no'),
-      rootContinuation: leftFor('root continuation'),
-      nested: leftFor('nested no'),
-      nestedContinuation: leftFor('nested continuation'),
-      odd: leftFor('odd top level'),
-      oddContinuation: leftFor('odd continuation'),
-      ordered: leftFor('ordered child'),
-      orderedContinuation: leftFor('ordered continuation'),
+      root: leftFor("root no"),
+      rootContinuation: leftFor("root continuation"),
+      nested: leftFor("nested no"),
+      nestedContinuation: leftFor("nested continuation"),
+      odd: leftFor("odd top level"),
+      oddContinuation: leftFor("odd continuation"),
+      ordered: leftFor("ordered child"),
+      orderedContinuation: leftFor("ordered continuation"),
     };
   });
 
@@ -68,11 +63,11 @@ test('continuation lines follow parsed list depth', async ({ page }) => {
   expect(await getMarkdown(page)).toBe(markdown);
 });
 
-test('typing an asterisk list marker does not leave a trailing star', async ({ page }) => {
-  await loadMarkdown(page, '');
+test("typing an asterisk list marker does not leave a trailing star", async ({ page }) => {
+  await loadMarkdown(page, "");
   await focusEditor(page);
-  await page.keyboard.type('* item');
+  await page.keyboard.type("* item");
 
-  await expect.poll(() => getMarkdown(page)).toBe('* item');
-  await expect(page.locator('.cm-line')).toHaveText('•item');
+  await expect.poll(() => getMarkdown(page)).toBe("* item");
+  await expect(page.locator(".cm-line")).toHaveText("•item");
 });

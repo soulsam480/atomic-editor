@@ -1,10 +1,10 @@
-import { defineComponent, getCurrentInstance, h, onBeforeUnmount, onMounted, ref, shallowRef, watch, } from 'vue';
-import { createEditorRuntime, } from './editor-runtime';
+import { defineComponent, getCurrentInstance, h, onBeforeUnmount, onMounted, ref, shallowRef, watch, } from "vue";
+import { createEditorRuntime, } from "./editor-runtime";
 const EMPTY_CODE_LANGUAGES = [];
 const EMPTY_EXTENSIONS = [];
 function defaultOpenLink(url) {
     try {
-        window.open(url, '_blank', 'noopener,noreferrer');
+        window.open(url, "_blank", "noopener,noreferrer");
     }
     catch {
         // window.open can throw in sandboxed iframes etc.
@@ -17,17 +17,14 @@ function defaultOpenLink(url) {
  * component `ref` and read methods off `handle.value`.
  *
  * ```ts
- * const { handle, setHandle } = useAtomicEditorHandle();
- * h(AtomicCodeMirrorEditor, { ref: setHandle, markdownSource: '# hi' });
- * handle.value?.openSearch();
+ * const { handle } = useAtomicEditorHandle();
+ * h(AtomicCodeMirrorEditor, { ref: handle, markdownSource: '# hi' });
+ * handle.value?.revealText('needle');
  * ```
  */
 export function useAtomicEditorHandle() {
     const handle = shallowRef(null);
-    const setHandle = (instance) => {
-        handle.value = instance ?? null;
-    };
-    return { handle, setHandle };
+    return { handle };
 }
 /**
  * Vue wrapper around a CodeMirror 6 editor configured for markdown
@@ -40,14 +37,10 @@ export function useAtomicEditorHandle() {
  * ```
  */
 export const AtomicCodeMirrorEditor = defineComponent({
-    name: 'AtomicCodeMirrorEditor',
+    name: "AtomicCodeMirrorEditor",
     props: {
         markdownSource: { type: String, required: true },
         documentId: { type: String, default: undefined },
-        initialSearchText: {
-            type: String,
-            default: null,
-        },
         initialRevealText: {
             type: String,
             default: null,
@@ -64,8 +57,8 @@ export const AtomicCodeMirrorEditor = defineComponent({
         },
     },
     emits: {
-        markdownChange: (markdown) => typeof markdown === 'string',
-        linkClick: (url) => typeof url === 'string',
+        markdownChange: (markdown) => typeof markdown === "string",
+        linkClick: (url) => typeof url === "string",
     },
     setup(props, { emit, expose }) {
         const rootEl = ref(null);
@@ -77,7 +70,7 @@ export const AtomicCodeMirrorEditor = defineComponent({
         const linkClick = (url) => {
             const hasListener = Boolean(instance?.vnode.props?.onLinkClick);
             if (hasListener)
-                emit('linkClick', url);
+                emit("linkClick", url);
             else
                 defaultOpenLink(url);
         };
@@ -91,12 +84,11 @@ export const AtomicCodeMirrorEditor = defineComponent({
                 return;
             runtime = createEditorRuntime(parent, {
                 markdown: props.markdownSource,
-                initialSearchText: props.initialSearchText,
                 initialRevealText: props.initialRevealText,
                 readOnly: props.readOnly,
                 codeLanguages: props.codeLanguages,
                 extensions: props.extensions,
-                onMarkdownChange: (markdown) => emit('markdownChange', markdown),
+                onMarkdownChange: (markdown) => emit("markdownChange", markdown),
                 onLinkClick: linkClick,
             });
         };
@@ -109,26 +101,28 @@ export const AtomicCodeMirrorEditor = defineComponent({
             teardown();
             mountRuntime();
         });
-        // Read-only is compartment-backed: reconfigure in place (scroll and
-        // search state preserved) rather than remounting.
+        // Read-only is compartment-backed: reconfigure in place (scroll
+        // state preserved) rather than remounting.
         watch(() => props.readOnly, (next) => runtime?.setReadOnly(next));
         watch(() => props.initialRevealText, (next) => {
             if (next)
                 runtime?.reveal(next);
         });
         expose({
+            // Exposed as a getter so consumers read the live `EditorView`
+            // (matching the handle type), not a function.
+            get view() {
+                return runtime?.handle.view;
+            },
             focus: () => runtime?.handle.focus(),
             undo: () => runtime?.handle.undo(),
             redo: () => runtime?.handle.redo(),
-            openSearch: (query) => runtime?.handle.openSearch(query),
-            closeSearch: () => runtime?.handle.closeSearch(),
             revealText: (query) => runtime?.handle.revealText(query),
-            isSearchOpen: () => runtime?.handle.isSearchOpen() ?? false,
-            getMarkdown: () => runtime?.handle.getMarkdown() ?? '',
+            getMarkdown: () => runtime?.handle.getMarkdown() ?? "",
             getContentDOM: () => runtime?.handle.getContentDOM() ?? null,
             setReadOnly: (next) => runtime?.handle.setReadOnly(next),
         });
-        return () => h('div', { ref: rootEl, class: 'atomic-cm-editor' });
+        return () => h("div", { ref: rootEl, class: "atomic-cm-editor" });
     },
 });
 //# sourceMappingURL=AtomicCodeMirrorEditor.js.map

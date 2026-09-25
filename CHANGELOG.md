@@ -32,6 +32,10 @@ the model `deepseek-v4.1-flash` running in
   dependencies. Fenced code blocks render as plain monospace by default;
   consumers install the grammars they want and pass them via the
   `codeLanguages` prop.
+- Removed the built-in find-in-document panel. `openSearch`, `closeSearch`,
+  `isSearchOpen`, and the `initialSearchText` prop are gone; wire
+  `@codemirror/search` through the `extensions` prop if you want find.
+  The imperative handle now exposes the underlying `view` instead.
 
 ### Distribution
 
@@ -182,7 +186,7 @@ handling were hiding several bugs.
   rebuild on doc changes too, handing CodeMirror a stale decoration set whose
   positions no longer matched the document — the `## ` replace then spanned
   the newly-typed line break, throwing `RangeError: Decorations that replace
-  line breaks may not be specified via plugins` and corrupting the heightmap
+line breaks may not be specified via plugins` and corrupting the heightmap
   (`No tile at position …`, broken scroll-into-view, content "jumping"). The
   freeze now still rebuilds on document changes; it only suppresses the
   selection-driven reveal it was meant to.
@@ -194,7 +198,7 @@ handling were hiding several bugs.
 - `--atomic-editor-selection-bg` now actually takes effect. CodeMirror's base
   theme styles the active selection with a deeper selector than the package
   used (`&dark.cm-focused > .cm-scroller > .cm-selectionLayer
-  .cm-selectionBackground`), so the token was silently overridden by the
+.cm-selectionBackground`), so the token was silently overridden by the
   default selection color. The rule now mirrors that selector depth (the same
   approach `oneDark` takes), so the configured selection color applies in both
   themes.
@@ -274,7 +278,7 @@ handling were hiding several bugs.
 - **Crash on multi-line link / image titles.** A markdown link or image
   whose title wraps across lines — e.g. `[text](url "first\nsecond")` —
   threw `RangeError: Decorations that replace line breaks may not be
-  specified via plugins` and took the editor down on mount. Root cause:
+specified via plugins` and took the editor down on mount. Root cause:
   the inline-preview `ViewPlugin` hides syntax tokens via
   `Decoration.replace`, and CM6 forbids plugin-sourced replaces from
   crossing a newline (block / line-spanning decorations must come from a

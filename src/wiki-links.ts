@@ -1,9 +1,30 @@
-import { autocompletion, type Completion, type CompletionContext, type CompletionResult } from '@codemirror/autocomplete';
-import { Prec, RangeSetBuilder, StateEffect, StateField, type EditorState, type Extension, type Text } from '@codemirror/state';
-import { Decoration, EditorView, ViewPlugin, WidgetType, keymap, type DecorationSet, type ViewUpdate } from '@codemirror/view';
-import { readOnlyFacet } from './read-only';
+import {
+  autocompletion,
+  type Completion,
+  type CompletionContext,
+  type CompletionResult,
+} from "@codemirror/autocomplete";
+import {
+  Prec,
+  RangeSetBuilder,
+  StateEffect,
+  StateField,
+  type EditorState,
+  type Extension,
+  type Text,
+} from "@codemirror/state";
+import {
+  Decoration,
+  EditorView,
+  ViewPlugin,
+  WidgetType,
+  keymap,
+  type DecorationSet,
+  type ViewUpdate,
+} from "@codemirror/view";
+import { readOnlyFacet } from "./read-only";
 
-export type WikiLinkStatus = 'resolved' | 'loading' | 'missing' | 'unresolved';
+export type WikiLinkStatus = "resolved" | "loading" | "missing" | "unresolved";
 
 export interface WikiLinkSuggestion {
   target: string;
@@ -15,7 +36,7 @@ export interface WikiLinkSuggestion {
 export interface WikiLinkResolvedTarget {
   target: string;
   label: string;
-  status?: Exclude<WikiLinkStatus, 'loading'>;
+  status?: Exclude<WikiLinkStatus, "loading">;
 }
 
 export interface WikiLinksConfig {
@@ -71,11 +92,13 @@ class WikiLinkWidget extends WidgetType {
   }
 
   override eq(other: WikiLinkWidget): boolean {
-    return this.target === other.target && this.label === other.label && this.status === other.status;
+    return (
+      this.target === other.target && this.label === other.label && this.status === other.status
+    );
   }
 
   override toDOM(): HTMLElement {
-    const span = document.createElement('span');
+    const span = document.createElement("span");
     span.className = `cm-atomic-wiki-link cm-atomic-wiki-link-${this.status}`;
     span.dataset.wikiLinkTarget = this.target;
     span.textContent = this.label;
@@ -101,14 +124,8 @@ class WikiLinkResolverPlugin {
 
   update(update: ViewUpdate): void {
     const readOnlyChanged =
-      update.startState.facet(readOnlyFacet) !==
-      update.state.facet(readOnlyFacet);
-    if (
-      update.docChanged ||
-      update.viewportChanged ||
-      update.selectionSet ||
-      readOnlyChanged
-    ) {
+      update.startState.facet(readOnlyFacet) !== update.state.facet(readOnlyFacet);
+    if (update.docChanged || update.viewportChanged || update.selectionSet || readOnlyChanged) {
       this.resolveVisibleLinks();
     }
   }
@@ -140,7 +157,8 @@ class WikiLinkResolverPlugin {
     if (!this.config.resolve) return;
 
     this.pending.add(target);
-    this.config.resolve(target)
+    this.config
+      .resolve(target)
       .then((resolved) => {
         if (!this.destroyed) {
           this.view.dispatch({ effects: wikiLinkResolved.of({ target, resolved }) });
@@ -185,14 +203,8 @@ export function wikiLinks(config: WikiLinksConfig = {}): Extension {
       }
 
       const readOnlyChanged =
-        transaction.startState.facet(readOnlyFacet) !==
-        transaction.state.facet(readOnlyFacet);
-      if (
-        transaction.docChanged ||
-        transaction.selection ||
-        resolutionChanged ||
-        readOnlyChanged
-      ) {
+        transaction.startState.facet(readOnlyFacet) !== transaction.state.facet(readOnlyFacet);
+      if (transaction.docChanged || transaction.selection || resolutionChanged || readOnlyChanged) {
         return { resolved, decorations: buildDecorations(transaction.state, resolved, config) };
       }
 
@@ -212,12 +224,14 @@ export function wikiLinks(config: WikiLinksConfig = {}): Extension {
 }
 
 function wikiLinkEditKeymap(): Extension {
-  return Prec.highest(keymap.of([
-    {
-      key: 'Backspace',
-      run: revealWikiLinkBeforeCursor,
-    },
-  ]));
+  return Prec.highest(
+    keymap.of([
+      {
+        key: "Backspace",
+        run: revealWikiLinkBeforeCursor,
+      },
+    ]),
+  );
 }
 
 function wikiLinkCompletions(config: WikiLinksConfig): Extension {
@@ -246,7 +260,10 @@ async function completionSource(
     if (context.aborted) return null;
   }
 
-  const suggestions = dedupeSuggestions(await config.suggest(query)).slice(0, config.maxSuggestions ?? 12);
+  const suggestions = dedupeSuggestions(await config.suggest(query)).slice(
+    0,
+    config.maxSuggestions ?? 12,
+  );
   if (context.aborted) return null;
 
   return {
@@ -261,12 +278,12 @@ function toCompletion(suggestion: WikiLinkSuggestion, config: WikiLinksConfig): 
   return {
     label: suggestion.label,
     detail: suggestion.detail,
-    type: 'text',
+    type: "text",
     boost: suggestion.boost,
     apply: (view: EditorView, completion: Completion, from: number, to: number) => {
       const selected = (completion as WikiLinkCompletion).suggestion;
       const insert = (config.serializeSuggestion ?? defaultSerializeSuggestion)(selected);
-      const replaceTo = view.state.doc.sliceString(to, to + 2) === ']]' ? to + 2 : to;
+      const replaceTo = view.state.doc.sliceString(to, to + 2) === "]]" ? to + 2 : to;
       view.dispatch({
         changes: { from, to: replaceTo, insert },
         selection: { anchor: from + insert.length },
@@ -311,17 +328,20 @@ function makeWikiLinkPointerGuard(config: WikiLinksConfig): Extension {
       };
 
       constructor(readonly view: EditorView) {
-        view.dom.addEventListener('pointerdown', this.onPointerDown, true);
+        view.dom.addEventListener("pointerdown", this.onPointerDown, true);
       }
 
       destroy() {
-        this.view.dom.removeEventListener('pointerdown', this.onPointerDown, true);
+        this.view.dom.removeEventListener("pointerdown", this.onPointerDown, true);
       }
     },
   );
 }
 
-function shouldOpenFromEvent(config: WikiLinksConfig, event: MouseEvent): config is WikiLinksConfig & { onOpen: (target: string) => void } {
+function shouldOpenFromEvent(
+  config: WikiLinksConfig,
+  event: MouseEvent,
+): config is WikiLinksConfig & { onOpen: (target: string) => void } {
   if (!config.onOpen) return false;
   if (event.shiftKey || event.altKey) return false;
   return config.openOnClick !== false || event.metaKey || event.ctrlKey;
@@ -330,7 +350,7 @@ function shouldOpenFromEvent(config: WikiLinksConfig, event: MouseEvent): config
 function wikiLinkElementFromEvent(event: MouseEvent, root?: HTMLElement): HTMLElement | null {
   const target = event.target;
   if (!(target instanceof Element)) return null;
-  const link = target.closest<HTMLElement>('[data-wiki-link-target]');
+  const link = target.closest<HTMLElement>("[data-wiki-link-target]");
   if (!link || (root && !root.contains(link))) return null;
   return link;
 }
@@ -348,21 +368,34 @@ function buildDecorations(
     if (!isSingleLineRange(state, link.from, link.to)) continue;
 
     if (!readOnly && isSelectionInsideLink(state, link)) {
-      builder.add(link.from, link.to, Decoration.mark({ class: 'cm-atomic-wiki-link-active' }));
+      builder.add(link.from, link.to, Decoration.mark({ class: "cm-atomic-wiki-link-active" }));
       continue;
     }
 
-    if (link.label && link.labelFrom != null && link.labelTo != null && link.labelFrom < link.labelTo) {
-      builder.add(link.from, link.labelFrom, Decoration.mark({ class: 'cm-atomic-wiki-link-hidden-syntax' }));
+    if (
+      link.label &&
+      link.labelFrom != null &&
+      link.labelTo != null &&
+      link.labelFrom < link.labelTo
+    ) {
+      builder.add(
+        link.from,
+        link.labelFrom,
+        Decoration.mark({ class: "cm-atomic-wiki-link-hidden-syntax" }),
+      );
       builder.add(
         link.labelFrom,
         link.labelTo,
         Decoration.mark({
-          class: 'cm-atomic-wiki-link cm-atomic-wiki-link-resolved',
-          attributes: { 'data-wiki-link-target': link.target },
+          class: "cm-atomic-wiki-link cm-atomic-wiki-link-resolved",
+          attributes: { "data-wiki-link-target": link.target },
         }),
       );
-      builder.add(link.labelTo, link.to, Decoration.mark({ class: 'cm-atomic-wiki-link-hidden-syntax' }));
+      builder.add(
+        link.labelTo,
+        link.to,
+        Decoration.mark({ class: "cm-atomic-wiki-link-hidden-syntax" }),
+      );
       continue;
     }
 
@@ -371,14 +404,15 @@ function buildDecorations(
     }
 
     const target = resolved.get(link.target);
-    const label = target === undefined ? 'Wiki link' : target?.label.trim() || 'Missing link';
-    const status: WikiLinkStatus = target === undefined
-      ? 'loading'
-      : target
-        ? target.status ?? 'resolved'
-        : 'missing';
+    const label = target === undefined ? "Wiki link" : target?.label.trim() || "Missing link";
+    const status: WikiLinkStatus =
+      target === undefined ? "loading" : target ? (target.status ?? "resolved") : "missing";
 
-    builder.add(link.from, link.to, Decoration.mark({ class: 'cm-atomic-wiki-link-hidden-syntax' }));
+    builder.add(
+      link.from,
+      link.to,
+      Decoration.mark({ class: "cm-atomic-wiki-link-hidden-syntax" }),
+    );
     builder.add(
       link.to,
       link.to,
@@ -418,7 +452,10 @@ function findWikiLinkEndingAt(doc: Text, pos: number): ParsedWikiLink | null {
   return findWikiLinksInLine(line.text, line.from).find((link) => link.to === pos) ?? null;
 }
 
-function findWikiLinksInVisibleRanges(doc: Text, ranges: readonly { from: number; to: number }[]): ParsedWikiLink[] {
+function findWikiLinksInVisibleRanges(
+  doc: Text,
+  ranges: readonly { from: number; to: number }[],
+): ParsedWikiLink[] {
   const links: ParsedWikiLink[] = [];
 
   for (const range of ranges) {
@@ -432,13 +469,17 @@ function findWikiLinksInVisibleRanges(doc: Text, ranges: readonly { from: number
       const fenceMatch = text.match(FENCE_RE);
 
       if (!fence.marker && fenceMatch) {
-        fence.marker = fenceMatch[1][0] as '`' | '~';
+        fence.marker = fenceMatch[1][0] as "`" | "~";
         fence.length = fenceMatch[1].length;
         continue;
       }
 
       if (fence.marker) {
-        if (fenceMatch && fenceMatch[1][0] === fence.marker && fenceMatch[1].length >= fence.length) {
+        if (
+          fenceMatch &&
+          fenceMatch[1][0] === fence.marker &&
+          fenceMatch[1].length >= fence.length
+        ) {
           fence.marker = null;
           fence.length = 0;
         }
@@ -458,14 +499,14 @@ function findWikiLinksInLine(text: string, lineStart: number): ParsedWikiLink[] 
   let searchFrom = 0;
 
   while (searchFrom < text.length) {
-    const open = text.indexOf('[[', searchFrom);
+    const open = text.indexOf("[[", searchFrom);
     if (open === -1) break;
     if (isInsideAny(open, codeSpans)) {
       searchFrom = open + 2;
       continue;
     }
 
-    const close = text.indexOf(']]', open + 2);
+    const close = text.indexOf("]]", open + 2);
     if (close === -1) break;
     if (isInsideAny(close, codeSpans)) {
       searchFrom = close + 2;
@@ -473,7 +514,7 @@ function findWikiLinksInLine(text: string, lineStart: number): ParsedWikiLink[] 
     }
 
     const body = text.slice(open + 2, close);
-    const pipe = body.indexOf('|');
+    const pipe = body.indexOf("|");
     const rawTarget = pipe === -1 ? body : body.slice(0, pipe);
     const rawLabel = pipe === -1 ? null : body.slice(pipe + 1);
     const target = rawTarget.trim();
@@ -508,12 +549,15 @@ function findWikiLinksInLine(text: string, lineStart: number): ParsedWikiLink[] 
   return links;
 }
 
-function fenceStateBeforeLine(doc: Text, lineNumber: number): { marker: '`' | '~' | null; length: number } {
-  const fence: { marker: '`' | '~' | null; length: number } = { marker: null, length: 0 };
+function fenceStateBeforeLine(
+  doc: Text,
+  lineNumber: number,
+): { marker: "`" | "~" | null; length: number } {
+  const fence: { marker: "`" | "~" | null; length: number } = { marker: null, length: 0 };
   for (let current = 1; current < lineNumber; current++) {
     const match = doc.line(current).text.match(FENCE_RE);
     if (!match) continue;
-    const marker = match[1][0] as '`' | '~';
+    const marker = match[1][0] as "`" | "~";
     const length = match[1].length;
     if (!fence.marker) {
       fence.marker = marker;
@@ -531,11 +575,11 @@ function inlineCodeSpans(text: string): { from: number; to: number }[] {
   let pos = 0;
 
   while (pos < text.length) {
-    const start = text.indexOf('`', pos);
+    const start = text.indexOf("`", pos);
     if (start === -1) break;
     let tickCount = 1;
-    while (text[start + tickCount] === '`') tickCount++;
-    const needle = '`'.repeat(tickCount);
+    while (text[start + tickCount] === "`") tickCount++;
+    const needle = "`".repeat(tickCount);
     const end = text.indexOf(needle, start + tickCount);
     if (end === -1) break;
     spans.push({ from: start, to: end + tickCount });
@@ -575,7 +619,10 @@ function defaultSerializeSuggestion(suggestion: WikiLinkSuggestion): string {
 }
 
 function escapeLabel(label: string): string {
-  return label.replace(/[\]\|]/g, ' ').replace(/\s+/g, ' ').trim();
+  return label
+    .replace(/[\]\|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function delay(ms: number): Promise<void> {

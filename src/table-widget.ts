@@ -1,4 +1,4 @@
-import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
+import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
 import {
   EditorSelection,
   Facet,
@@ -8,18 +8,12 @@ import {
   type EditorState,
   type Extension,
   type Range,
-} from '@codemirror/state';
-import {
-  Decoration,
-  EditorView,
-  WidgetType,
-  keymap,
-  type DecorationSet,
-} from '@codemirror/view';
-import type { SyntaxNode } from '@lezer/common';
-import { matchHighlight } from './highlight';
-import { treeGrowthEffect, treeProgressPlugin } from './tree-progress';
-import { readOnlyFacet } from './read-only';
+} from "@codemirror/state";
+import { Decoration, EditorView, WidgetType, keymap, type DecorationSet } from "@codemirror/view";
+import type { SyntaxNode } from "@lezer/common";
+import { matchHighlight } from "./highlight";
+import { treeGrowthEffect, treeProgressPlugin } from "./tree-progress";
+import { readOnlyFacet } from "./read-only";
 
 // GFM tables as a WYSIWYG block widget.
 //
@@ -71,23 +65,23 @@ export function splitRowCells(line: string): string[] {
   let s = line.trim();
   // Strip the optional outer pipes so they don't yield phantom empty
   // leading/trailing cells.
-  if (s.startsWith('|')) s = s.slice(1);
-  if (s.endsWith('|')) s = s.slice(0, -1);
+  if (s.startsWith("|")) s = s.slice(1);
+  if (s.endsWith("|")) s = s.slice(0, -1);
 
   const cells: string[] = [];
-  let buf = '';
+  let buf = "";
   for (let i = 0; i < s.length; i++) {
     const ch = s[i];
     // A backslash escapes the next char (e.g. `\|` is a literal pipe in
     // a GFM cell) — keep both and don't treat the pipe as a separator.
-    if (ch === '\\' && i + 1 < s.length) {
+    if (ch === "\\" && i + 1 < s.length) {
       buf += ch + s[i + 1];
       i++;
       continue;
     }
-    if (ch === '|') {
+    if (ch === "|") {
       cells.push(buf.trim());
-      buf = '';
+      buf = "";
       continue;
     }
     buf += ch;
@@ -104,9 +98,9 @@ function parseTable(state: EditorState, tableNode: SyntaxNode): TableModel | nul
   if (!cursor.firstChild()) return null;
 
   do {
-    if (cursor.name === 'TableHeader') {
+    if (cursor.name === "TableHeader") {
       header.push(...collectCells(state, cursor.node));
-    } else if (cursor.name === 'TableRow') {
+    } else if (cursor.name === "TableRow") {
       rows.push(collectCells(state, cursor.node));
     }
     // TableDelimiter (per-row `|` and whole-line `|---|---|`) is ignored.
@@ -122,29 +116,26 @@ function parseTable(state: EditorState, tableNode: SyntaxNode): TableModel | nul
 // (`\|` — e.g. round-tripping content the parser handed us) is left
 // alone so serialize is idempotent.
 function escapeCell(text: string): string {
-  return text.replace(/\r?\n/g, ' ').replace(/(?<!\\)\|/g, '\\|');
+  return text.replace(/\r?\n/g, " ").replace(/(?<!\\)\|/g, "\\|");
 }
 
 export function serializeTable(model: TableModel): string {
   const columnCount = model.header.length;
   const lines: string[] = [];
-  lines.push('| ' + model.header.map(escapeCell).join(' | ') + ' |');
-  lines.push('| ' + model.header.map(() => '---').join(' | ') + ' |');
+  lines.push("| " + model.header.map(escapeCell).join(" | ") + " |");
+  lines.push("| " + model.header.map(() => "---").join(" | ") + " |");
   for (const row of model.rows) {
     const padded: string[] = [];
-    for (let c = 0; c < columnCount; c++) padded.push(escapeCell(row[c] ?? ''));
-    lines.push('| ' + padded.join(' | ') + ' |');
+    for (let c = 0; c < columnCount; c++) padded.push(escapeCell(row[c] ?? ""));
+    lines.push("| " + padded.join(" | ") + " |");
   }
-  return lines.join('\n');
+  return lines.join("\n");
 }
 
 function readModelFromDom(wrap: HTMLElement): TableModel {
-  const header = Array.from(wrap.querySelectorAll<HTMLElement>('thead th')).map(
-    readCellSource,
-  );
-  const rows = Array.from(wrap.querySelectorAll<HTMLElement>('tbody tr')).map(
-    (tr) =>
-      Array.from(tr.querySelectorAll<HTMLElement>('td')).map(readCellSource),
+  const header = Array.from(wrap.querySelectorAll<HTMLElement>("thead th")).map(readCellSource);
+  const rows = Array.from(wrap.querySelectorAll<HTMLElement>("tbody tr")).map((tr) =>
+    Array.from(tr.querySelectorAll<HTMLElement>("td")).map(readCellSource),
   );
   return { header, rows };
 }
@@ -160,11 +151,11 @@ function readModelFromDom(wrap: HTMLElement): TableModel {
 // acceptable tradeoff because the escapes are typically ingestion
 // artifacts users don't want to preserve anyway).
 function readCellSource(cell: HTMLElement): string {
-  return (cell.dataset.raw ?? '').trim();
+  return (cell.dataset.raw ?? "").trim();
 }
 
 function getCellSource(cell: HTMLElement): HTMLElement | null {
-  return cell.querySelector<HTMLElement>('.cm-atomic-table-cell-source');
+  return cell.querySelector<HTMLElement>(".cm-atomic-table-cell-source");
 }
 
 // ---- inline-mark parsing for cell source --------------------------------
@@ -180,29 +171,29 @@ function getCellSource(cell: HTMLElement): HTMLElement | null {
 // source renders consistently inside and outside tables.
 
 type CellToken =
-  | { type: 'text'; text: string }
-  | { type: 'strong'; delim: '**' | '__'; children: CellToken[] }
-  | { type: 'em'; delim: '*' | '_'; children: CellToken[] }
-  | { type: 'strike'; children: CellToken[] }
-  | { type: 'highlight'; children: CellToken[] }
-  | { type: 'link'; textChildren: CellToken[]; url: string };
+  | { type: "text"; text: string }
+  | { type: "strong"; delim: "**" | "__"; children: CellToken[] }
+  | { type: "em"; delim: "*" | "_"; children: CellToken[] }
+  | { type: "strike"; children: CellToken[] }
+  | { type: "highlight"; children: CellToken[] }
+  | { type: "link"; textChildren: CellToken[]; url: string };
 
 export function parseCellInline(raw: string): CellToken[] {
   const tokens: CellToken[] = [];
-  let textBuf = '';
+  let textBuf = "";
   let i = 0;
 
   const flushText = () => {
     if (textBuf.length) {
-      tokens.push({ type: 'text', text: textBuf });
-      textBuf = '';
+      tokens.push({ type: "text", text: textBuf });
+      textBuf = "";
     }
   };
 
   while (i < raw.length) {
     // CommonMark backslash escape — the following char is emitted
     // literally and can't open/close a mark. Pair is consumed.
-    if (raw[i] === '\\' && i + 1 < raw.length && /[!-/:-@[-`{-~]/.test(raw[i + 1])) {
+    if (raw[i] === "\\" && i + 1 < raw.length && /[!-/:-@[-`{-~]/.test(raw[i + 1])) {
       textBuf += raw[i + 1];
       i += 2;
       continue;
@@ -224,10 +215,7 @@ export function parseCellInline(raw: string): CellToken[] {
   return tokens;
 }
 
-function matchCellMarkAt(
-  raw: string,
-  from: number,
-): { token: CellToken; end: number } | null {
+function matchCellMarkAt(raw: string, from: number): { token: CellToken; end: number } | null {
   const rest = raw.slice(from);
 
   // Bold with `**` or `__` — greedy on the outside, lazy on the
@@ -235,14 +223,14 @@ function matchCellMarkAt(
   let m = rest.match(/^\*\*([\s\S]+?)\*\*/);
   if (m) {
     return {
-      token: { type: 'strong', delim: '**', children: parseCellInline(m[1]) },
+      token: { type: "strong", delim: "**", children: parseCellInline(m[1]) },
       end: from + m[0].length,
     };
   }
   m = rest.match(/^__([\s\S]+?)__/);
   if (m) {
     return {
-      token: { type: 'strong', delim: '__', children: parseCellInline(m[1]) },
+      token: { type: "strong", delim: "__", children: parseCellInline(m[1]) },
       end: from + m[0].length,
     };
   }
@@ -251,7 +239,7 @@ function matchCellMarkAt(
   m = rest.match(/^~~([\s\S]+?)~~/);
   if (m) {
     return {
-      token: { type: 'strike', children: parseCellInline(m[1]) },
+      token: { type: "strike", children: parseCellInline(m[1]) },
       end: from + m[0].length,
     };
   }
@@ -262,10 +250,8 @@ function matchCellMarkAt(
   if (highlight) {
     return {
       token: {
-        type: 'highlight',
-        children: parseCellInline(
-          raw.slice(highlight.contentFrom, highlight.contentTo),
-        ),
+        type: "highlight",
+        children: parseCellInline(raw.slice(highlight.contentFrom, highlight.contentTo)),
       },
       end: highlight.end,
     };
@@ -277,7 +263,7 @@ function matchCellMarkAt(
   if (m) {
     return {
       token: {
-        type: 'link',
+        type: "link",
         textChildren: parseCellInline(m[1]),
         url: m[2],
       },
@@ -291,7 +277,7 @@ function matchCellMarkAt(
   m = rest.match(/^\*([^*\n]+?)\*/);
   if (m) {
     return {
-      token: { type: 'em', delim: '*', children: parseCellInline(m[1]) },
+      token: { type: "em", delim: "*", children: parseCellInline(m[1]) },
       end: from + m[0].length,
     };
   }
@@ -299,12 +285,12 @@ function matchCellMarkAt(
   // Italic with `_`. Avoid triggering inside words like `snake_case`
   // by requiring the char before `_` to not be a word character.
   // (Fallback to true when `_` is at start-of-input.)
-  const prev = from > 0 ? raw[from - 1] : '';
+  const prev = from > 0 ? raw[from - 1] : "";
   if (!/\w/.test(prev)) {
     m = rest.match(/^_([^_\n]+?)_/);
     if (m) {
       return {
-        token: { type: 'em', delim: '_', children: parseCellInline(m[1]) },
+        token: { type: "em", delim: "_", children: parseCellInline(m[1]) },
         end: from + m[0].length,
       };
     }
@@ -329,55 +315,55 @@ function buildCellSourceDom(raw: string): DocumentFragment {
 }
 
 function renderCellToken(tok: CellToken): Node {
-  if (tok.type === 'text') {
+  if (tok.type === "text") {
     return document.createTextNode(tok.text);
   }
 
-  if (tok.type === 'strong') {
-    const wrap = document.createElement('span');
-    wrap.className = 'cm-atomic-strong-wrap';
+  if (tok.type === "strong") {
+    const wrap = document.createElement("span");
+    wrap.className = "cm-atomic-strong-wrap";
     wrap.appendChild(makeCellMark(tok.delim));
-    const inner = document.createElement('span');
-    inner.className = 'cm-atomic-strong';
+    const inner = document.createElement("span");
+    inner.className = "cm-atomic-strong";
     inner.appendChild(renderTokensTo(tok.children));
     wrap.appendChild(inner);
     wrap.appendChild(makeCellMark(tok.delim));
     return wrap;
   }
 
-  if (tok.type === 'em') {
-    const wrap = document.createElement('span');
-    wrap.className = 'cm-atomic-em-wrap';
+  if (tok.type === "em") {
+    const wrap = document.createElement("span");
+    wrap.className = "cm-atomic-em-wrap";
     wrap.appendChild(makeCellMark(tok.delim));
-    const inner = document.createElement('span');
-    inner.className = 'cm-atomic-em';
+    const inner = document.createElement("span");
+    inner.className = "cm-atomic-em";
     inner.appendChild(renderTokensTo(tok.children));
     wrap.appendChild(inner);
     wrap.appendChild(makeCellMark(tok.delim));
     return wrap;
   }
 
-  if (tok.type === 'strike') {
-    const wrap = document.createElement('span');
-    wrap.className = 'cm-atomic-strike-wrap';
-    wrap.appendChild(makeCellMark('~~'));
-    const inner = document.createElement('span');
-    inner.className = 'cm-atomic-strike';
+  if (tok.type === "strike") {
+    const wrap = document.createElement("span");
+    wrap.className = "cm-atomic-strike-wrap";
+    wrap.appendChild(makeCellMark("~~"));
+    const inner = document.createElement("span");
+    inner.className = "cm-atomic-strike";
     inner.appendChild(renderTokensTo(tok.children));
     wrap.appendChild(inner);
-    wrap.appendChild(makeCellMark('~~'));
+    wrap.appendChild(makeCellMark("~~"));
     return wrap;
   }
 
-  if (tok.type === 'highlight') {
-    const wrap = document.createElement('span');
-    wrap.className = 'cm-atomic-highlight-wrap';
-    wrap.appendChild(makeCellMark('=='));
-    const inner = document.createElement('span');
-    inner.className = 'cm-atomic-highlight';
+  if (tok.type === "highlight") {
+    const wrap = document.createElement("span");
+    wrap.className = "cm-atomic-highlight-wrap";
+    wrap.appendChild(makeCellMark("=="));
+    const inner = document.createElement("span");
+    inner.className = "cm-atomic-highlight";
     inner.appendChild(renderTokensTo(tok.children));
     wrap.appendChild(inner);
-    wrap.appendChild(makeCellMark('=='));
+    wrap.appendChild(makeCellMark("=="));
     return wrap;
   }
 
@@ -388,29 +374,29 @@ function renderCellToken(tok: CellToken): Node {
   // `data-url`
   // lets the cell-source click handler open the right URL without
   // re-parsing.
-  const wrap = document.createElement('span');
-  wrap.className = 'cm-atomic-link-wrap';
+  const wrap = document.createElement("span");
+  wrap.className = "cm-atomic-link-wrap";
   wrap.dataset.url = tok.url;
-  wrap.appendChild(makeCellMark('['));
-  const inner = document.createElement('span');
-  inner.className = 'cm-atomic-link';
+  wrap.appendChild(makeCellMark("["));
+  const inner = document.createElement("span");
+  inner.className = "cm-atomic-link";
   inner.appendChild(renderTokensTo(tok.textChildren));
   wrap.appendChild(inner);
-  wrap.appendChild(makeCellMark(']'));
-  wrap.appendChild(makeCellMark('('));
+  wrap.appendChild(makeCellMark("]"));
+  wrap.appendChild(makeCellMark("("));
   const urlMark = makeCellMark(tok.url);
-  urlMark.classList.add('cm-atomic-link-url');
+  urlMark.classList.add("cm-atomic-link-url");
   wrap.appendChild(urlMark);
-  wrap.appendChild(makeCellMark(')'));
+  wrap.appendChild(makeCellMark(")"));
   // Real, clickable external-link icon. A CSS `::after` pseudo can't
   // receive a click (no event target), so the icon is its own
   // non-editable element; the source's delegated click handler opens
   // the URL. `contenteditable=false` keeps it out of caret navigation
   // and out of the cell's serialized text.
-  const icon = document.createElement('span');
-  icon.className = 'cm-atomic-link-icon';
-  icon.contentEditable = 'false';
-  icon.setAttribute('aria-hidden', 'true');
+  const icon = document.createElement("span");
+  icon.className = "cm-atomic-link-icon";
+  icon.contentEditable = "false";
+  icon.setAttribute("aria-hidden", "true");
   wrap.appendChild(icon);
   return wrap;
 }
@@ -422,8 +408,8 @@ function renderTokensTo(tokens: CellToken[]): DocumentFragment {
 }
 
 function makeCellMark(text: string): HTMLElement {
-  const el = document.createElement('span');
-  el.className = 'cm-atomic-mark';
+  const el = document.createElement("span");
+  el.className = "cm-atomic-mark";
   el.textContent = text;
   return el;
 }
@@ -437,7 +423,7 @@ function makeCellMark(text: string): HTMLElement {
 // `active` class that reveals that wrap's delimiters — mirroring the
 // outer editor's cursor-inside-link unfold for every inline mark.
 function renderCellSourceDecorated(source: HTMLElement): void {
-  const raw = source.parentElement?.dataset.raw ?? '';
+  const raw = source.parentElement?.dataset.raw ?? "";
   source.replaceChildren(buildCellSourceDom(raw));
 }
 
@@ -491,10 +477,10 @@ function setCaretCharOffset(container: HTMLElement, offset: number): void {
 }
 
 const MARK_WRAP_CLASSES = [
-  'cm-atomic-strong-wrap',
-  'cm-atomic-em-wrap',
-  'cm-atomic-strike-wrap',
-  'cm-atomic-link-wrap',
+  "cm-atomic-strong-wrap",
+  "cm-atomic-em-wrap",
+  "cm-atomic-strike-wrap",
+  "cm-atomic-link-wrap",
 ];
 
 function isMarkWrap(el: Element): boolean {
@@ -510,8 +496,8 @@ function isMarkWrap(el: Element): boolean {
 function updateActiveMarkForSource(source: HTMLElement): void {
   // Clear existing `active` classes within this cell only — other
   // cells track their own state via their own focus lifecycle.
-  for (const el of source.querySelectorAll('.active')) {
-    el.classList.remove('active');
+  for (const el of source.querySelectorAll(".active")) {
+    el.classList.remove("active");
   }
 
   const doc = source.ownerDocument;
@@ -524,15 +510,15 @@ function updateActiveMarkForSource(source: HTMLElement): void {
   let node: Node | null = anchor;
   while (node && node !== source) {
     if (node instanceof Element && isMarkWrap(node)) {
-      node.classList.add('active');
+      node.classList.add("active");
     }
     node = node.parentNode;
   }
 }
 
 function clearActiveMarksInSource(source: HTMLElement): void {
-  for (const el of source.querySelectorAll('.active')) {
-    el.classList.remove('active');
+  for (const el of source.querySelectorAll(".active")) {
+    el.classList.remove("active");
   }
 }
 
@@ -548,7 +534,7 @@ function extractCellImages(text: string): CellImage[] {
   const imgs: CellImage[] = [];
   const re = /!\[([^\]]*)\]\(([^\s)"']+)(?:\s+["'][^)]*["'])?\)/g;
   for (const match of text.matchAll(re)) {
-    imgs.push({ alt: match[1] || '', src: match[2] });
+    imgs.push({ alt: match[1] || "", src: match[2] });
   }
   return imgs;
 }
@@ -559,34 +545,34 @@ function extractCellImages(text: string): CellImage[] {
 // cell (no focus inside) the raw source hides and only the rendered
 // image remains visible. `data-has-image` flips on for that CSS hook.
 function refreshCellPreview(cell: HTMLElement): void {
-  const existing = cell.querySelector<HTMLElement>('.cm-atomic-table-cell-preview');
+  const existing = cell.querySelector<HTMLElement>(".cm-atomic-table-cell-preview");
   if (existing) existing.remove();
 
-  const text = cell.dataset.raw ?? '';
+  const text = cell.dataset.raw ?? "";
   const imgs = extractCellImages(text);
   if (imgs.length === 0) {
     delete cell.dataset.hasImage;
     return;
   }
-  cell.dataset.hasImage = 'true';
+  cell.dataset.hasImage = "true";
 
-  const preview = document.createElement('div');
-  preview.className = 'cm-atomic-table-cell-preview';
+  const preview = document.createElement("div");
+  preview.className = "cm-atomic-table-cell-preview";
   // Preview is visual only — no caret, no contenteditable scope.
   // Keeping it out of contenteditable also means clicking the image
   // won't create a phantom caret position at the preview boundary.
-  preview.contentEditable = 'false';
+  preview.contentEditable = "false";
 
   for (const { src, alt } of imgs) {
-    const img = document.createElement('img');
+    const img = document.createElement("img");
     img.src = src;
     img.alt = alt;
-    img.loading = 'lazy';
-    img.className = 'cm-atomic-table-cell-image';
+    img.loading = "lazy";
+    img.className = "cm-atomic-table-cell-image";
     // Clicking the image puts the caret in the source text so the
     // user can edit the underlying markdown — same affordance as
     // clicking a block-level image outside a table.
-    img.addEventListener('pointerdown', (event) => {
+    img.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       event.stopPropagation();
       const source = getCellSource(cell);
@@ -614,7 +600,7 @@ function findCurrentTableRange(
   if (pos < 0) return null;
   const tree = syntaxTree(view.state);
   let node: SyntaxNode | null = tree.resolveInner(pos, 1);
-  while (node && node.name !== 'Table') node = node.parent;
+  while (node && node.name !== "Table") node = node.parent;
   if (node) return { from: node.from, to: node.to };
 
   // Fallback: scan for the nearest Table node containing or starting
@@ -623,7 +609,7 @@ function findCurrentTableRange(
   let found: SyntaxNode | null = null;
   tree.iterate({
     enter: (n) => {
-      if (n.name !== 'Table') return;
+      if (n.name !== "Table") return;
       if (n.from <= pos && n.to >= pos) {
         found = n.node;
         return false;
@@ -647,13 +633,16 @@ function placeCaretAtEnd(el: HTMLElement): void {
 }
 
 function getAllCells(wrap: HTMLElement): HTMLElement[] {
-  return Array.from(wrap.querySelectorAll<HTMLElement>('th, td'));
+  return Array.from(wrap.querySelectorAll<HTMLElement>("th, td"));
 }
 
 // ---- widget ---------------------------------------------------------
 
 class TableWidget extends WidgetType {
-  constructor(readonly model: TableModel, readonly readOnly: boolean) {
+  constructor(
+    readonly model: TableModel,
+    readonly readOnly: boolean,
+  ) {
     super();
   }
 
@@ -674,26 +663,26 @@ class TableWidget extends WidgetType {
   }
 
   toDOM(view: EditorView): HTMLElement {
-    const wrap = document.createElement('div');
-    wrap.className = 'cm-atomic-table';
+    const wrap = document.createElement("div");
+    wrap.className = "cm-atomic-table";
 
-    const table = document.createElement('table');
+    const table = document.createElement("table");
     wrap.appendChild(table);
 
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
     for (const text of this.model.header) {
-      headerRow.appendChild(makeCell('th', text, view));
+      headerRow.appendChild(makeCell("th", text, view));
     }
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
-    const tbody = document.createElement('tbody');
+    const tbody = document.createElement("tbody");
     const colCount = this.model.header.length;
     for (const row of this.model.rows) {
-      const tr = document.createElement('tr');
+      const tr = document.createElement("tr");
       for (let c = 0; c < colCount; c++) {
-        tr.appendChild(makeCell('td', row[c] ?? '', view));
+        tr.appendChild(makeCell("td", row[c] ?? "", view));
       }
       tbody.appendChild(tr);
     }
@@ -710,11 +699,7 @@ class TableWidget extends WidgetType {
   }
 }
 
-function makeCell(
-  tag: 'th' | 'td',
-  text: string,
-  view: EditorView,
-): HTMLElement {
+function makeCell(tag: "th" | "td", text: string, view: EditorView): HTMLElement {
   const cell = document.createElement(tag);
   cell.dataset.raw = text;
 
@@ -723,11 +708,11 @@ function makeCell(
   // phantom caret positions around images) while the source text
   // stays in a dedicated editable box above it.
   const readOnly = view.state.facet(readOnlyFacet);
-  const source = document.createElement('div');
-  source.className = 'cm-atomic-table-cell-source';
+  const source = document.createElement("div");
+  source.className = "cm-atomic-table-cell-source";
   // Read-only cells still show their decorated source but accept no
   // edits — the editing listeners below are skipped entirely.
-  source.contentEditable = readOnly ? 'false' : 'true';
+  source.contentEditable = readOnly ? "false" : "true";
   source.spellcheck = !readOnly;
   // Decorated DOM on mount. Delimiters (`.cm-atomic-mark`) are
   // `display: none` by default — the caret can't navigate into them,
@@ -758,22 +743,22 @@ function makeCell(
   const openTargetFromEvent = (event: Event): HTMLElement | null => {
     const target = event.target;
     if (!(target instanceof Element)) return null;
-    const selector = readOnly ? '.cm-atomic-link-wrap' : '.cm-atomic-link-icon';
+    const selector = readOnly ? ".cm-atomic-link-wrap" : ".cm-atomic-link-icon";
     return target.closest<HTMLElement>(selector);
   };
 
-  source.addEventListener('pointerdown', (event) => {
+  source.addEventListener("pointerdown", (event) => {
     if (event.button !== 0) return;
     // Block focus / caret placement when pressing the open target; the
     // open happens on the following `click`.
     if (openTargetFromEvent(event)) event.preventDefault();
   });
 
-  source.addEventListener('click', (event) => {
+  source.addEventListener("click", (event) => {
     const hit = openTargetFromEvent(event);
     if (!hit) return;
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    const url = hit.closest<HTMLElement>('.cm-atomic-link-wrap')?.dataset.url;
+    const url = hit.closest<HTMLElement>(".cm-atomic-link-wrap")?.dataset.url;
     if (!url) return;
     event.preventDefault();
     event.stopPropagation();
@@ -790,11 +775,7 @@ function makeCell(
 // right-click context menu, and focus-routing for clicks that land
 // outside the inner source element. Skipped wholesale for read-only
 // cells, which keep only the link-open handlers in `makeCell`.
-function attachCellEditing(
-  view: EditorView,
-  cell: HTMLElement,
-  source: HTMLElement,
-): void {
+function attachCellEditing(view: EditorView, cell: HTMLElement, source: HTMLElement): void {
   // Commit the cell's current DOM text to `dataset.raw`, re-render its
   // decorated form (so marks the user just typed — e.g. a new `**` pair
   // — decorate immediately), restore the caret across that rebuild, and
@@ -803,7 +784,7 @@ function attachCellEditing(
     // textContent (not innerText) so `display: none` delimiters inside
     // mark wraps are still captured — otherwise a cell containing
     // `**bold**` would serialize to just `bold` on every keystroke.
-    const raw = (source.textContent ?? '').replace(/\s+/g, ' ').trim();
+    const raw = (source.textContent ?? "").replace(/\s+/g, " ").trim();
     cell.dataset.raw = raw;
     const offset = getCaretCharOffset(source);
     renderCellSourceDecorated(source);
@@ -818,15 +799,15 @@ function attachCellEditing(
   // — dropping CJK input, accented characters, and dictation. Suppress
   // every update while composing and run one commit when it ends.
   let composing = false;
-  source.addEventListener('compositionstart', () => {
+  source.addEventListener("compositionstart", () => {
     composing = true;
   });
-  source.addEventListener('compositionend', () => {
+  source.addEventListener("compositionend", () => {
     composing = false;
     commit();
   });
 
-  source.addEventListener('input', (event) => {
+  source.addEventListener("input", (event) => {
     if (composing || (event as InputEvent).isComposing) return;
     commit();
   });
@@ -836,11 +817,9 @@ function attachCellEditing(
   // verbatim; newlines and `|` corrupt the row. We flatten whitespace
   // and strip markup here, and `escapeCell` neutralizes any literal `|`
   // on serialize.
-  source.addEventListener('paste', (event) => {
+  source.addEventListener("paste", (event) => {
     event.preventDefault();
-    const text = (event.clipboardData?.getData('text/plain') ?? '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    const text = (event.clipboardData?.getData("text/plain") ?? "").replace(/\s+/g, " ").trim();
     const sel = source.ownerDocument.defaultView?.getSelection();
     if (!sel || sel.rangeCount === 0) return;
     const range = sel.getRangeAt(0);
@@ -856,26 +835,26 @@ function attachCellEditing(
   // three ways the caret can land in a new mark without firing an
   // input event (click-to-place, arrow-key nav, tab-into-cell). The
   // update is idempotent — redundant calls cost nothing.
-  source.addEventListener('focus', () => updateActiveMarkForSource(source));
-  source.addEventListener('mouseup', () => updateActiveMarkForSource(source));
-  source.addEventListener('keyup', () => updateActiveMarkForSource(source));
+  source.addEventListener("focus", () => updateActiveMarkForSource(source));
+  source.addEventListener("mouseup", () => updateActiveMarkForSource(source));
+  source.addEventListener("keyup", () => updateActiveMarkForSource(source));
 
   // Blur: collapse every active wrap so the reader-resting state
   // hides all delimiters.
-  source.addEventListener('blur', () => clearActiveMarksInSource(source));
+  source.addEventListener("blur", () => clearActiveMarksInSource(source));
 
-  source.addEventListener('keydown', (event) => {
+  source.addEventListener("keydown", (event) => {
     // Enter mirrors Tab — advance to the next cell (appending a row past
     // the last one) instead of inserting a line break a single-line cell
     // can't represent. Shift reverses direction for both.
-    if (event.key === 'Tab' || event.key === 'Enter') {
+    if (event.key === "Tab" || event.key === "Enter") {
       event.preventDefault();
       event.stopPropagation();
       moveCellFocus(view, cell, event.shiftKey ? -1 : 1);
     }
   });
 
-  cell.addEventListener('contextmenu', (event) => {
+  cell.addEventListener("contextmenu", (event) => {
     event.preventDefault();
     event.stopPropagation();
     openCellMenu(view, cell, event.clientX, event.clientY);
@@ -888,7 +867,7 @@ function attachCellEditing(
   // The image's own pointerdown handler already does this, but
   // covers only image hits — this covers empty padding and the
   // space between/around images.
-  cell.addEventListener('pointerdown', (event) => {
+  cell.addEventListener("pointerdown", (event) => {
     // A click on the editable source — including its inner mark spans
     // and text — must keep the browser's native caret placement. Forcing
     // focus-at-end here would yank the caret to the end of the cell
@@ -908,23 +887,19 @@ function attachCellEditing(
 function cellRowIndex(cell: HTMLElement): number {
   // Rows are indexed within tbody (header isn't a "row" we can
   // insert-above; header context items are column-only).
-  const tr = cell.closest<HTMLElement>('tr');
-  const tbody = tr?.closest<HTMLElement>('tbody');
+  const tr = cell.closest<HTMLElement>("tr");
+  const tbody = tr?.closest<HTMLElement>("tbody");
   if (!tr || !tbody) return -1;
-  return Array.from(tbody.querySelectorAll<HTMLElement>('tr')).indexOf(tr);
+  return Array.from(tbody.querySelectorAll<HTMLElement>("tr")).indexOf(tr);
 }
 
 function cellColIndex(cell: HTMLElement): number {
-  const tr = cell.closest<HTMLElement>('tr');
+  const tr = cell.closest<HTMLElement>("tr");
   if (!tr) return -1;
-  return Array.from(tr.querySelectorAll<HTMLElement>('th, td')).indexOf(cell);
+  return Array.from(tr.querySelectorAll<HTMLElement>("th, td")).indexOf(cell);
 }
 
-function dispatchModel(
-  view: EditorView,
-  wrap: HTMLElement,
-  nextModel: TableModel,
-): void {
+function dispatchModel(view: EditorView, wrap: HTMLElement, nextModel: TableModel): void {
   // A menu can outlive the editable widget that created it when the
   // host toggles reading mode. Guard before touching its now-detached
   // DOM so a stale menu action cannot mutate a read-only document (or
@@ -938,74 +913,77 @@ function dispatchModel(
   });
 }
 
-function openCellMenu(
-  view: EditorView,
-  cell: HTMLElement,
-  x: number,
-  y: number,
-): void {
-  const wrap = cell.closest<HTMLElement>('.cm-atomic-table');
+function openCellMenu(view: EditorView, cell: HTMLElement, x: number, y: number): void {
+  const wrap = cell.closest<HTMLElement>(".cm-atomic-table");
   if (!wrap) return;
-  const isHeader = cell.tagName === 'TH';
+  const isHeader = cell.tagName === "TH";
   const row = cellRowIndex(cell);
   const col = cellColIndex(cell);
 
-  const menu = document.createElement('div');
-  menu.className = 'cm-atomic-table-menu';
+  const menu = document.createElement("div");
+  menu.className = "cm-atomic-table-menu";
   menu.style.left = `${x}px`;
   menu.style.top = `${y}px`;
 
-  type MenuItem = { label: string; action: () => void } | 'separator';
+  type MenuItem = { label: string; action: () => void } | "separator";
   const items: MenuItem[] = [];
 
   if (!isHeader) {
     items.push({
-      label: 'Insert row above',
+      label: "Insert row above",
       action: () => {
         const m = readModelFromDom(wrap);
-        m.rows.splice(row, 0, m.header.map(() => ''));
+        m.rows.splice(
+          row,
+          0,
+          m.header.map(() => ""),
+        );
         dispatchModel(view, wrap, m);
       },
     });
     items.push({
-      label: 'Insert row below',
+      label: "Insert row below",
       action: () => {
         const m = readModelFromDom(wrap);
-        m.rows.splice(row + 1, 0, m.header.map(() => ''));
+        m.rows.splice(
+          row + 1,
+          0,
+          m.header.map(() => ""),
+        );
         dispatchModel(view, wrap, m);
       },
     });
     items.push({
-      label: 'Delete row',
+      label: "Delete row",
       action: () => {
         const m = readModelFromDom(wrap);
         if (row >= 0 && row < m.rows.length) m.rows.splice(row, 1);
         dispatchModel(view, wrap, m);
       },
     });
-    items.push('separator');
+    items.push("separator");
   }
 
   items.push({
-    label: 'Insert column left',
+    label: "Insert column left",
     action: () => {
       const m = readModelFromDom(wrap);
-      m.header.splice(col, 0, '');
-      for (const r of m.rows) r.splice(col, 0, '');
+      m.header.splice(col, 0, "");
+      for (const r of m.rows) r.splice(col, 0, "");
       dispatchModel(view, wrap, m);
     },
   });
   items.push({
-    label: 'Insert column right',
+    label: "Insert column right",
     action: () => {
       const m = readModelFromDom(wrap);
-      m.header.splice(col + 1, 0, '');
-      for (const r of m.rows) r.splice(col + 1, 0, '');
+      m.header.splice(col + 1, 0, "");
+      for (const r of m.rows) r.splice(col + 1, 0, "");
       dispatchModel(view, wrap, m);
     },
   });
   items.push({
-    label: 'Delete column',
+    label: "Delete column",
     action: () => {
       const m = readModelFromDom(wrap);
       // Guard: don't leave the table with zero columns — lezer
@@ -1023,29 +1001,29 @@ function openCellMenu(
     if (dismissed) return;
     dismissed = true;
     menu.remove();
-    document.removeEventListener('mousedown', onDocDown, true);
-    document.removeEventListener('keydown', onDocKey, true);
+    document.removeEventListener("mousedown", onDocDown, true);
+    document.removeEventListener("keydown", onDocKey, true);
   };
   const onDocDown = (event: MouseEvent) => {
     if (event.target instanceof Node && menu.contains(event.target)) return;
     dismiss();
   };
   const onDocKey = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') dismiss();
+    if (event.key === "Escape") dismiss();
   };
 
   for (const item of items) {
-    if (item === 'separator') {
-      const sep = document.createElement('div');
-      sep.className = 'cm-atomic-table-menu-sep';
+    if (item === "separator") {
+      const sep = document.createElement("div");
+      sep.className = "cm-atomic-table-menu-sep";
       menu.appendChild(sep);
       continue;
     }
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'cm-atomic-table-menu-item';
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "cm-atomic-table-menu-item";
     btn.textContent = item.label;
-    btn.addEventListener('click', () => {
+    btn.addEventListener("click", () => {
       item.action();
       dismiss();
     });
@@ -1067,14 +1045,14 @@ function openCellMenu(
   // mousedown cycle doesn't immediately dismiss us.
   setTimeout(() => {
     if (dismissed) return;
-    document.addEventListener('mousedown', onDocDown, true);
-    document.addEventListener('keydown', onDocKey, true);
+    document.addEventListener("mousedown", onDocDown, true);
+    document.addEventListener("keydown", onDocKey, true);
   }, 0);
 }
 
 function dispatchModelFromDom(view: EditorView, cell: HTMLElement): void {
   if (view.state.facet(readOnlyFacet)) return;
-  const wrap = cell.closest<HTMLElement>('.cm-atomic-table');
+  const wrap = cell.closest<HTMLElement>(".cm-atomic-table");
   if (!wrap) return;
   const range = findCurrentTableRange(view, wrap);
   if (!range) return;
@@ -1089,12 +1067,12 @@ function dispatchModelFromDom(view: EditorView, cell: HTMLElement): void {
     // Tag as typing so CM6's history coalesces consecutive cell edits
     // into one undo group instead of one step per keystroke (each of
     // which rewrites the whole table range).
-    annotations: Transaction.userEvent.of('input.type'),
+    annotations: Transaction.userEvent.of("input.type"),
   });
 }
 
 function moveCellFocus(view: EditorView, cell: HTMLElement, dir: 1 | -1): void {
-  const wrap = cell.closest<HTMLElement>('.cm-atomic-table');
+  const wrap = cell.closest<HTMLElement>(".cm-atomic-table");
   if (!wrap) return;
   const cells = getAllCells(wrap);
   const idx = cells.indexOf(cell);
@@ -1127,7 +1105,7 @@ function appendRow(view: EditorView, wrap: HTMLElement): void {
   const range = findCurrentTableRange(view, wrap);
   if (!range) return;
   const model = readModelFromDom(wrap);
-  model.rows.push(model.header.map(() => ''));
+  model.rows.push(model.header.map(() => ""));
   const next = serializeTable(model);
   view.dispatch({
     changes: { from: range.from, to: range.to, insert: next },
@@ -1144,9 +1122,7 @@ function appendRow(view: EditorView, wrap: HTMLElement): void {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       if (view.state.facet(readOnlyFacet)) return;
-      const tables = Array.from(
-        view.dom.querySelectorAll<HTMLElement>('.cm-atomic-table'),
-      );
+      const tables = Array.from(view.dom.querySelectorAll<HTMLElement>(".cm-atomic-table"));
       let target: HTMLElement | null = null;
       for (const el of tables) {
         try {
@@ -1160,9 +1136,9 @@ function appendRow(view: EditorView, wrap: HTMLElement): void {
         }
       }
       if (!target) return;
-      const rows = target.querySelectorAll<HTMLElement>('tbody tr');
+      const rows = target.querySelectorAll<HTMLElement>("tbody tr");
       const newRow = rows[rows.length - 1];
-      const firstCell = newRow?.querySelector<HTMLElement>('td');
+      const firstCell = newRow?.querySelector<HTMLElement>("td");
       const firstSource = firstCell ? getCellSource(firstCell) : null;
       if (!firstSource) return;
       firstSource.focus();
@@ -1202,7 +1178,7 @@ function backspaceAtTableBoundary(view: EditorView): boolean {
     from: Math.max(0, pos - 2),
     to: pos,
     enter: (n) => {
-      if (n.name !== 'Table') return;
+      if (n.name !== "Table") return;
       if (n.to === pos || n.to + 1 === pos) {
         tableBefore = n.node;
       }
@@ -1229,13 +1205,12 @@ function buildTableWidgets(state: EditorState): DecorationSet {
   // doesn't retrigger it, so a partial tree at mount means orphaned
   // `| col |` raw lines for the rest of the session. 200ms budget
   // bounds the worst case on very long atoms.
-  const tree =
-    ensureSyntaxTree(state, state.doc.length, 200) ?? syntaxTree(state);
+  const tree = ensureSyntaxTree(state, state.doc.length, 200) ?? syntaxTree(state);
   const doc = state.doc;
 
   tree.iterate({
     enter: (node) => {
-      if (node.name !== 'Table') return;
+      if (node.name !== "Table") return;
       const model = parseTable(state, node.node);
       if (!model) return;
 
@@ -1286,7 +1261,7 @@ function changeAffectsTables(tr: Transaction, existing: DecorationSet): boolean 
     const startLine = state.doc.lineAt(fromB);
     const endLine = toB > startLine.to ? state.doc.lineAt(toB) : startLine;
     for (let n = startLine.number; n <= endLine.number; n++) {
-      if (state.doc.line(n).text.includes('|')) {
+      if (state.doc.line(n).text.includes("|")) {
         affected = true;
         break;
       }
@@ -1305,9 +1280,7 @@ const tableField = StateField.define<DecorationSet>({
       if (effect.is(treeGrowthEffect)) return buildTableWidgets(tr.state);
     }
     // Reading-mode toggle: rebuild so cells re-render editable / inert.
-    if (
-      tr.startState.facet(readOnlyFacet) !== tr.state.facet(readOnlyFacet)
-    ) {
+    if (tr.startState.facet(readOnlyFacet) !== tr.state.facet(readOnlyFacet)) {
       return buildTableWidgets(tr.state);
     }
     if (!tr.docChanged) return deco;
@@ -1329,7 +1302,7 @@ export interface TablesConfig {
 
 const defaultLinkOpener = (url: string): void => {
   try {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    window.open(url, "_blank", "noopener,noreferrer");
   } catch {
     // window.open can throw in sandboxed iframes etc.
   }
@@ -1338,10 +1311,7 @@ const defaultLinkOpener = (url: string): void => {
 // Per-view facet so `makeCell`'s pointerdown handler can look up the
 // current link-click callback. Avoids threading the config through the
 // widget constructor and toDOM args.
-export const tableLinkClickFacet = Facet.define<
-  (url: string) => void,
-  (url: string) => void
->({
+export const tableLinkClickFacet = Facet.define<(url: string) => void, (url: string) => void>({
   combine: (values) => values[0] ?? defaultLinkOpener,
 });
 
@@ -1351,6 +1321,6 @@ export function tables(config: TablesConfig = {}): Extension {
     treeProgressPlugin,
     ...(config.onLinkClick ? [tableLinkClickFacet.of(config.onLinkClick)] : []),
     // Prec.high so we run before the default Backspace binding.
-    Prec.high(keymap.of([{ key: 'Backspace', run: backspaceAtTableBoundary }])),
+    Prec.high(keymap.of([{ key: "Backspace", run: backspaceAtTableBoundary }])),
   ];
 }

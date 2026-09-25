@@ -1,14 +1,14 @@
-import { afterEach, describe, expect, it } from 'vitest';
-import { mount } from '@vue/test-utils';
-import { AtomicCodeMirrorEditor } from '../AtomicCodeMirrorEditor';
-import { MARKDOWN_CONTRACTS } from './fixtures/markdown-contracts';
+import { afterEach, describe, expect, it } from "vitest";
+import { mount } from "@vue/test-utils";
+import { AtomicCodeMirrorEditor } from "../AtomicCodeMirrorEditor";
+import { MARKDOWN_CONTRACTS } from "./fixtures/markdown-contracts";
 
 const mounted: { host: HTMLElement; wrapper: ReturnType<typeof mount> }[] = [];
 
 function mountEditor(markdown: string): HTMLElement {
-  const host = document.createElement('div');
-  host.style.width = '720px';
-  host.style.height = '640px';
+  const host = document.createElement("div");
+  host.style.width = "720px";
+  host.style.height = "640px";
   document.body.appendChild(host);
   const wrapper = mount(AtomicCodeMirrorEditor, {
     props: { markdownSource: markdown },
@@ -25,11 +25,11 @@ afterEach(() => {
   }
 });
 
-describe('shared Markdown rendering contracts', () => {
+describe("shared Markdown rendering contracts", () => {
   for (const contract of MARKDOWN_CONTRACTS) {
     it(contract.name, () => {
       const host = mountEditor(contract.markdown);
-      const visible = host.querySelector('.cm-content')?.textContent ?? '';
+      const visible = host.querySelector(".cm-content")?.textContent ?? "";
 
       for (const text of contract.containsText ?? []) {
         expect(visible).toContain(text);

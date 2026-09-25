@@ -1,10 +1,10 @@
-import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 export declare const treeGrowthEffect: import("@codemirror/state").StateEffectType<null>;
 type IdleHandle = {
-    kind: 'idle';
+    kind: "idle";
     id: number;
 } | {
-    kind: 'raf';
+    kind: "raf";
     id: number;
 };
 /**

@@ -1,8 +1,8 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Page } from "@playwright/test";
 
 export interface HarnessOptions {
   readOnly?: boolean;
-  theme?: 'dark' | 'light';
+  theme?: "dark" | "light";
 }
 
 interface HarnessWindow extends Window {
@@ -15,10 +15,10 @@ interface HarnessWindow extends Window {
 }
 
 export async function openHarness(page: Page): Promise<void> {
-  await page.goto('/harness.html');
+  await page.goto("/harness.html");
   await page.waitForFunction(() => {
     const harnessWindow = window as HarnessWindow;
-    return typeof harnessWindow.atomicHarness?.load === 'function';
+    return typeof harnessWindow.atomicHarness?.load === "function";
   });
 }
 
@@ -34,13 +34,13 @@ export async function loadMarkdown(
     },
     { source: markdown, fixtureOptions: options },
   );
-  await expect(page.locator('.cm-editor')).toHaveCount(1);
+  await expect(page.locator(".cm-editor")).toHaveCount(1);
 }
 
 export async function getMarkdown(page: Page): Promise<string> {
   return page.evaluate(() => {
     const harnessWindow = window as HarnessWindow;
-    return harnessWindow.atomicHarness?.getMarkdown() ?? '';
+    return harnessWindow.atomicHarness?.getMarkdown() ?? "";
   });
 }
 

@@ -1,6 +1,6 @@
-import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
-import { StateEffect } from '@codemirror/state';
-import { EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { ensureSyntaxTree, syntaxTree } from "@codemirror/language";
+import { StateEffect } from "@codemirror/state";
+import { EditorView, ViewPlugin, type ViewUpdate } from "@codemirror/view";
 
 // Broadcasts that lezer's incremental parser has advanced past where
 // it was last observed. Consumers (tables, images, inline-preview)
@@ -34,19 +34,19 @@ const GROWTH_THRESHOLD = 8192;
 // whole frame."
 const TICK_BUDGET_MS = 30;
 
-type IdleHandle = { kind: 'idle'; id: number } | { kind: 'raf'; id: number };
+type IdleHandle = { kind: "idle"; id: number } | { kind: "raf"; id: number };
 
 function scheduleIdle(cb: () => void): IdleHandle {
-  if (typeof window.requestIdleCallback === 'function') {
-    return { kind: 'idle', id: window.requestIdleCallback(() => cb()) };
+  if (typeof window.requestIdleCallback === "function") {
+    return { kind: "idle", id: window.requestIdleCallback(() => cb()) };
   }
-  return { kind: 'raf', id: window.requestAnimationFrame(() => cb()) };
+  return { kind: "raf", id: window.requestAnimationFrame(() => cb()) };
 }
 
 function cancelIdle(handle: IdleHandle): void {
-  if (handle.kind === 'idle' && typeof window.cancelIdleCallback === 'function') {
+  if (handle.kind === "idle" && typeof window.cancelIdleCallback === "function") {
     window.cancelIdleCallback(handle.id);
-  } else if (handle.kind === 'raf') {
+  } else if (handle.kind === "raf") {
     window.cancelAnimationFrame(handle.id);
   }
 }

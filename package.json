@@ -5,24 +5,33 @@
   "keywords": [
     "codemirror",
     "codemirror6",
-    "markdown",
     "editor",
-    "wysiwyg",
     "live-preview",
+    "markdown",
     "obsidian",
-    "vue"
+    "vue",
+    "wysiwyg"
   ],
+  "homepage": "https://github.com/kenforthewin/atomic-editor#readme",
+  "bugs": {
+    "url": "https://github.com/kenforthewin/atomic-editor/issues"
+  },
   "license": "MIT",
   "author": "Kenny Bergquist",
-  "homepage": "https://github.com/kenforthewin/atomic-editor#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kenforthewin/atomic-editor.git"
   },
-  "bugs": {
-    "url": "https://github.com/kenforthewin/atomic-editor/issues"
-  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,18 +41,6 @@
       "default": "./dist/index.js"
     },
     "./styles.css": "./dist/styles/inline-preview.css"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE",
-    "CHANGELOG.md"
-  ],
-  "sideEffects": [
-    "**/*.css"
-  ],
-  "engines": {
-    "node": ">=18"
   },
   "publishConfig": {
     "access": "public"
@@ -62,19 +59,6 @@
     "test:e2e:headed": "playwright test --project=chromium --headed",
     "test:package": "node scripts/test-package.mjs"
   },
-  "peerDependencies": {
-    "@codemirror/autocomplete": "^6.0.0",
-    "@codemirror/commands": "^6.0.0",
-    "@codemirror/lang-markdown": "^6.0.0",
-    "@codemirror/language": "^6.0.0",
-    "@codemirror/search": "^6.0.0",
-    "@codemirror/state": "^6.0.0",
-    "@codemirror/view": "^6.0.0",
-    "@lezer/common": "^1.0.0",
-    "@lezer/highlight": "^1.0.0",
-    "@lezer/markdown": "^1.0.0",
-    "vue": "^3.4.0"
-  },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.0",
     "@codemirror/commands": "^6.10.0",
@@ -90,10 +74,27 @@
     "@vue/test-utils": "^2.5.1",
     "cpy-cli": "^7.0.0",
     "happy-dom": "^20.10.6",
+    "oxfmt": "^0.70.0",
     "playwright": "^1.61.1",
     "typescript": "^7.0.2",
     "vite": "^8.1.4",
     "vitest": "^4.1.10",
     "vue": "^3.5.43"
+  },
+  "peerDependencies": {
+    "@codemirror/autocomplete": "^6.0.0",
+    "@codemirror/commands": "^6.0.0",
+    "@codemirror/lang-markdown": "^6.0.0",
+    "@codemirror/language": "^6.0.0",
+    "@codemirror/search": "^6.0.0",
+    "@codemirror/state": "^6.0.0",
+    "@codemirror/view": "^6.0.0",
+    "@lezer/common": "^1.0.0",
+    "@lezer/highlight": "^1.0.0",
+    "@lezer/markdown": "^1.0.0",
+    "vue": "^3.4.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }

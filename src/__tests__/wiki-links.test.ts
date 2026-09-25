@@ -1,15 +1,15 @@
-import { describe, expect, it, afterEach, vi } from 'vitest';
-import { mount } from '@vue/test-utils';
+import { describe, expect, it, afterEach, vi } from "vitest";
+import { mount } from "@vue/test-utils";
 import {
   Compartment,
   EditorState,
   type EditorStateConfig,
   type Extension,
-} from '@codemirror/state';
-import { EditorView } from '@codemirror/view';
-import { AtomicCodeMirrorEditor } from '../AtomicCodeMirrorEditor';
-import { readOnlyExtension } from '../read-only';
-import { wikiLinks } from '../wiki-links';
+} from "@codemirror/state";
+import { EditorView } from "@codemirror/view";
+import { AtomicCodeMirrorEditor } from "../AtomicCodeMirrorEditor";
+import { readOnlyExtension } from "../read-only";
+import { wikiLinks } from "../wiki-links";
 
 const mounted: { host: HTMLElement; wrapper: ReturnType<typeof mount> }[] = [];
 const views: EditorView[] = [];
@@ -18,9 +18,9 @@ function mountEditor(
   markdown: string,
   options: Parameters<typeof wikiLinks>[0] = {},
 ): { host: HTMLElement } {
-  const host = document.createElement('div');
-  host.style.width = '600px';
-  host.style.height = '400px';
+  const host = document.createElement("div");
+  host.style.width = "600px";
+  host.style.height = "400px";
   document.body.appendChild(host);
   const wrapper = mount(AtomicCodeMirrorEditor, {
     props: {
@@ -29,8 +29,8 @@ function mountEditor(
         wikiLinks({
           resolve: async (target) => ({
             target,
-            label: 'Resolved Target',
-            status: 'resolved',
+            label: "Resolved Target",
+            status: "resolved",
           }),
           ...options,
         }),
@@ -57,9 +57,9 @@ afterEach(() => {
 function makeView(
   doc: string,
   extensions: Extension,
-  selection?: EditorStateConfig['selection'],
+  selection?: EditorStateConfig["selection"],
 ): EditorView {
-  const host = document.createElement('div');
+  const host = document.createElement("div");
   document.body.appendChild(host);
   const view = new EditorView({
     parent: host,
@@ -69,98 +69,92 @@ function makeView(
   return view;
 }
 
-describe('wikiLinks', () => {
-  it('renders labeled wiki links without exposing the target as visible link text', () => {
-    const { host } = mountEditor('Linked atom: [[atom-123|Project Atlas]]');
+describe("wikiLinks", () => {
+  it("renders labeled wiki links without exposing the target as visible link text", () => {
+    const { host } = mountEditor("Linked atom: [[atom-123|Project Atlas]]");
 
-    const link = host.querySelector<HTMLElement>('.cm-atomic-wiki-link');
+    const link = host.querySelector<HTMLElement>(".cm-atomic-wiki-link");
     expect(link).not.toBeNull();
-    expect(link?.dataset.wikiLinkTarget).toBe('atom-123');
-    expect(link?.textContent).toBe('Project Atlas');
+    expect(link?.dataset.wikiLinkTarget).toBe("atom-123");
+    expect(link?.textContent).toBe("Project Atlas");
 
-    const hiddenSyntax = host.querySelector(
-      '.cm-atomic-wiki-link-hidden-syntax',
-    );
-    expect(hiddenSyntax?.textContent).toContain('atom-123');
+    const hiddenSyntax = host.querySelector(".cm-atomic-wiki-link-hidden-syntax");
+    expect(hiddenSyntax?.textContent).toContain("atom-123");
   });
 
-  it('leaves inline-code wiki-link text untouched', () => {
-    const { host } = mountEditor('Code: `[[atom-123|Project Atlas]]`');
+  it("leaves inline-code wiki-link text untouched", () => {
+    const { host } = mountEditor("Code: `[[atom-123|Project Atlas]]`");
 
-    expect(host.querySelector('.cm-atomic-wiki-link')).toBeNull();
-    expect(host.textContent).toContain('[[atom-123|Project Atlas]]');
+    expect(host.querySelector(".cm-atomic-wiki-link")).toBeNull();
+    expect(host.textContent).toContain("[[atom-123|Project Atlas]]");
   });
 
-  it('opens on plain click by default when an opener is configured', () => {
+  it("opens on plain click by default when an opener is configured", () => {
     const onOpen = vi.fn();
-    const { host } = mountEditor('Linked atom: [[atom-123|Project Atlas]]', {
+    const { host } = mountEditor("Linked atom: [[atom-123|Project Atlas]]", {
       onOpen,
     });
 
-    host.querySelector<HTMLElement>('.cm-atomic-wiki-link')?.click();
-    expect(onOpen).toHaveBeenCalledWith('atom-123');
+    host.querySelector<HTMLElement>(".cm-atomic-wiki-link")?.click();
+    expect(onOpen).toHaveBeenCalledWith("atom-123");
   });
 
-  it('collapses active wiki-link source when reading mode is enabled', () => {
-    const doc = 'Before [[atom-123|Project Atlas]] after';
+  it("collapses active wiki-link source when reading mode is enabled", () => {
+    const doc = "Before [[atom-123|Project Atlas]] after";
     const readOnly = new Compartment();
-    const view = makeView(
-      doc,
-      [wikiLinks(), readOnly.of(readOnlyExtension(false))],
-      { anchor: doc.indexOf('atom-123') + 2 },
-    );
+    const view = makeView(doc, [wikiLinks(), readOnly.of(readOnlyExtension(false))], {
+      anchor: doc.indexOf("atom-123") + 2,
+    });
 
-    expect(view.dom.querySelector('.cm-atomic-wiki-link-active')).not.toBeNull();
+    expect(view.dom.querySelector(".cm-atomic-wiki-link-active")).not.toBeNull();
 
     view.dispatch({
       effects: readOnly.reconfigure(readOnlyExtension(true)),
     });
 
-    expect(view.dom.querySelector('.cm-atomic-wiki-link-active')).toBeNull();
-    expect(
-      view.dom.querySelector<HTMLElement>('.cm-atomic-wiki-link')?.textContent,
-    ).toBe('Project Atlas');
+    expect(view.dom.querySelector(".cm-atomic-wiki-link-active")).toBeNull();
+    expect(view.dom.querySelector<HTMLElement>(".cm-atomic-wiki-link")?.textContent).toBe(
+      "Project Atlas",
+    );
   });
 
-  it('can require modifier-click for opening', () => {
+  it("can require modifier-click for opening", () => {
     const onOpen = vi.fn();
-    const { host } = mountEditor('Linked atom: [[atom-123|Project Atlas]]', {
+    const { host } = mountEditor("Linked atom: [[atom-123|Project Atlas]]", {
       onOpen,
       openOnClick: false,
     });
 
-    host.querySelector<HTMLElement>('.cm-atomic-wiki-link')?.click();
+    host.querySelector<HTMLElement>(".cm-atomic-wiki-link")?.click();
     expect(onOpen).not.toHaveBeenCalled();
   });
 
-  it('does not resolve a bare wiki link while the cursor is inside it', () => {
+  it("does not resolve a bare wiki link while the cursor is inside it", () => {
     const resolve = vi.fn(async (target: string) => ({
       target,
-      label: 'Resolved Target',
-      status: 'resolved' as const,
+      label: "Resolved Target",
+      status: "resolved" as const,
     }));
-    const cursorInsideTarget = 'Draft: [['.length + 2;
-    const view = makeView(
-      'Draft: [[atom-123]]',
-      [wikiLinks({ resolve })],
-      { anchor: cursorInsideTarget },
-    );
+    const cursorInsideTarget = "Draft: [[".length + 2;
+    const view = makeView("Draft: [[atom-123]]", [wikiLinks({ resolve })], {
+      anchor: cursorInsideTarget,
+    });
 
     expect(resolve).not.toHaveBeenCalled();
 
     view.dispatch({ selection: { anchor: view.state.doc.length } });
 
     expect(resolve).toHaveBeenCalledOnce();
-    expect(resolve).toHaveBeenCalledWith('atom-123');
+    expect(resolve).toHaveBeenCalledWith("atom-123");
   });
 
-  it('does not resolve or decorate bare links rejected by the resolver policy', () => {
+  it("does not resolve or decorate bare links rejected by the resolver policy", () => {
     const resolve = vi.fn(async (target: string) => ({
       target,
-      label: 'Resolved Target',
-      status: 'resolved' as const,
+      label: "Resolved Target",
+      status: "resolved" as const,
     }));
-    const view = makeView('Draft: [[not-an-atom-id]]', [
+    const view = makeView("Draft: [[not-an-atom-id]]", [
       wikiLinks({
         resolve,
         shouldResolve: () => false,
@@ -168,28 +162,28 @@ describe('wikiLinks', () => {
     ]);
 
     expect(resolve).not.toHaveBeenCalled();
-    expect(view.dom.querySelector('.cm-atomic-wiki-link')).toBeNull();
-    expect(view.dom.textContent).toContain('[[not-an-atom-id]]');
+    expect(view.dom.querySelector(".cm-atomic-wiki-link")).toBeNull();
+    expect(view.dom.textContent).toContain("[[not-an-atom-id]]");
   });
 
-  it('reveals a rendered bare link before backspacing through it', () => {
-    const doc = 'Before [[missing-target]] after';
+  it("reveals a rendered bare link before backspacing through it", () => {
+    const doc = "Before [[missing-target]] after";
     const view = makeView(
       doc,
       [
         wikiLinks({
           resolve: async (target) => ({
             target,
-            label: 'Missing atom',
-            status: 'missing',
+            label: "Missing atom",
+            status: "missing",
           }),
         }),
       ],
-      { anchor: 'Before [[missing-target]]'.length },
+      { anchor: "Before [[missing-target]]".length },
     );
 
-    const event = new KeyboardEvent('keydown', {
-      key: 'Backspace',
+    const event = new KeyboardEvent("keydown", {
+      key: "Backspace",
       bubbles: true,
       cancelable: true,
     });
@@ -198,6 +192,6 @@ describe('wikiLinks', () => {
     expect(dispatched).toBe(false);
     expect(event.defaultPrevented).toBe(true);
     expect(view.state.doc.toString()).toBe(doc);
-    expect(view.state.selection.main.head).toBe('Before [[missing-target'.length);
+    expect(view.state.selection.main.head).toBe("Before [[missing-target".length);
   });
 });

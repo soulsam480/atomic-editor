@@ -1,7 +1,7 @@
-import { autocompletion } from '@codemirror/autocomplete';
-import { Prec, RangeSetBuilder, StateEffect, StateField } from '@codemirror/state';
-import { Decoration, EditorView, ViewPlugin, WidgetType, keymap } from '@codemirror/view';
-import { readOnlyFacet } from './read-only';
+import { autocompletion, } from "@codemirror/autocomplete";
+import { Prec, RangeSetBuilder, StateEffect, StateField, } from "@codemirror/state";
+import { Decoration, EditorView, ViewPlugin, WidgetType, keymap, } from "@codemirror/view";
+import { readOnlyFacet } from "./read-only";
 const WIKI_LINK_QUERY_RE = /\[\[[^\]\n|]*$/;
 const FENCE_RE = /^ {0,3}(`{3,}|~{3,})/;
 // Cap on cached resolutions so a long session scrolling through many
@@ -33,10 +33,10 @@ class WikiLinkWidget extends WidgetType {
         });
     }
     eq(other) {
-        return this.target === other.target && this.label === other.label && this.status === other.status;
+        return (this.target === other.target && this.label === other.label && this.status === other.status);
     }
     toDOM() {
-        const span = document.createElement('span');
+        const span = document.createElement("span");
         span.className = `cm-atomic-wiki-link cm-atomic-wiki-link-${this.status}`;
         span.dataset.wikiLinkTarget = this.target;
         span.textContent = this.label;
@@ -81,12 +81,8 @@ class WikiLinkResolverPlugin {
         this.resolveVisibleLinks();
     }
     update(update) {
-        const readOnlyChanged = update.startState.facet(readOnlyFacet) !==
-            update.state.facet(readOnlyFacet);
-        if (update.docChanged ||
-            update.viewportChanged ||
-            update.selectionSet ||
-            readOnlyChanged) {
+        const readOnlyChanged = update.startState.facet(readOnlyFacet) !== update.state.facet(readOnlyFacet);
+        if (update.docChanged || update.viewportChanged || update.selectionSet || readOnlyChanged) {
             this.resolveVisibleLinks();
         }
     }
@@ -114,7 +110,8 @@ class WikiLinkResolverPlugin {
         if (!this.config.resolve)
             return;
         this.pending.add(target);
-        this.config.resolve(target)
+        this.config
+            .resolve(target)
             .then((resolved) => {
             if (!this.destroyed) {
                 this.view.dispatch({ effects: wikiLinkResolved.of({ target, resolved }) });
@@ -157,12 +154,8 @@ export function wikiLinks(config = {}) {
                     resolved.delete(key);
                 }
             }
-            const readOnlyChanged = transaction.startState.facet(readOnlyFacet) !==
-                transaction.state.facet(readOnlyFacet);
-            if (transaction.docChanged ||
-                transaction.selection ||
-                resolutionChanged ||
-                readOnlyChanged) {
+            const readOnlyChanged = transaction.startState.facet(readOnlyFacet) !== transaction.state.facet(readOnlyFacet);
+            if (transaction.docChanged || transaction.selection || resolutionChanged || readOnlyChanged) {
                 return { resolved, decorations: buildDecorations(transaction.state, resolved, config) };
             }
             return { resolved, decorations: value.decorations.map(transaction.changes) };
@@ -181,7 +174,7 @@ export function wikiLinks(config = {}) {
 function wikiLinkEditKeymap() {
     return Prec.highest(keymap.of([
         {
-            key: 'Backspace',
+            key: "Backspace",
             run: revealWikiLinkBeforeCursor,
         },
     ]));
@@ -222,12 +215,12 @@ function toCompletion(suggestion, config) {
     return {
         label: suggestion.label,
         detail: suggestion.detail,
-        type: 'text',
+        type: "text",
         boost: suggestion.boost,
         apply: (view, completion, from, to) => {
             const selected = completion.suggestion;
             const insert = (config.serializeSuggestion ?? defaultSerializeSuggestion)(selected);
-            const replaceTo = view.state.doc.sliceString(to, to + 2) === ']]' ? to + 2 : to;
+            const replaceTo = view.state.doc.sliceString(to, to + 2) === "]]" ? to + 2 : to;
             view.dispatch({
                 changes: { from, to: replaceTo, insert },
                 selection: { anchor: from + insert.length },
@@ -282,10 +275,10 @@ function makeWikiLinkPointerGuard(config) {
                     event.stopImmediatePropagation();
                 }
             });
-            view.dom.addEventListener('pointerdown', this.onPointerDown, true);
+            view.dom.addEventListener("pointerdown", this.onPointerDown, true);
         }
         destroy() {
-            this.view.dom.removeEventListener('pointerdown', this.onPointerDown, true);
+            this.view.dom.removeEventListener("pointerdown", this.onPointerDown, true);
         }
     });
 }
@@ -300,7 +293,7 @@ function wikiLinkElementFromEvent(event, root) {
     const target = event.target;
     if (!(target instanceof Element))
         return null;
-    const link = target.closest('[data-wiki-link-target]');
+    const link = target.closest("[data-wiki-link-target]");
     if (!link || (root && !root.contains(link)))
         return null;
     return link;
@@ -313,29 +306,28 @@ function buildDecorations(state, resolved, config) {
         if (!isSingleLineRange(state, link.from, link.to))
             continue;
         if (!readOnly && isSelectionInsideLink(state, link)) {
-            builder.add(link.from, link.to, Decoration.mark({ class: 'cm-atomic-wiki-link-active' }));
+            builder.add(link.from, link.to, Decoration.mark({ class: "cm-atomic-wiki-link-active" }));
             continue;
         }
-        if (link.label && link.labelFrom != null && link.labelTo != null && link.labelFrom < link.labelTo) {
-            builder.add(link.from, link.labelFrom, Decoration.mark({ class: 'cm-atomic-wiki-link-hidden-syntax' }));
+        if (link.label &&
+            link.labelFrom != null &&
+            link.labelTo != null &&
+            link.labelFrom < link.labelTo) {
+            builder.add(link.from, link.labelFrom, Decoration.mark({ class: "cm-atomic-wiki-link-hidden-syntax" }));
             builder.add(link.labelFrom, link.labelTo, Decoration.mark({
-                class: 'cm-atomic-wiki-link cm-atomic-wiki-link-resolved',
-                attributes: { 'data-wiki-link-target': link.target },
+                class: "cm-atomic-wiki-link cm-atomic-wiki-link-resolved",
+                attributes: { "data-wiki-link-target": link.target },
             }));
-            builder.add(link.labelTo, link.to, Decoration.mark({ class: 'cm-atomic-wiki-link-hidden-syntax' }));
+            builder.add(link.labelTo, link.to, Decoration.mark({ class: "cm-atomic-wiki-link-hidden-syntax" }));
             continue;
         }
         if (!config.resolve || !shouldResolveWikiLink(config, link.target)) {
             continue;
         }
         const target = resolved.get(link.target);
-        const label = target === undefined ? 'Wiki link' : target?.label.trim() || 'Missing link';
-        const status = target === undefined
-            ? 'loading'
-            : target
-                ? target.status ?? 'resolved'
-                : 'missing';
-        builder.add(link.from, link.to, Decoration.mark({ class: 'cm-atomic-wiki-link-hidden-syntax' }));
+        const label = target === undefined ? "Wiki link" : target?.label.trim() || "Missing link";
+        const status = target === undefined ? "loading" : target ? (target.status ?? "resolved") : "missing";
+        builder.add(link.from, link.to, Decoration.mark({ class: "cm-atomic-wiki-link-hidden-syntax" }));
         builder.add(link.to, link.to, Decoration.widget({
             widget: new WikiLinkWidget(link.target, label, status),
             side: -1,
@@ -384,7 +376,9 @@ function findWikiLinksInVisibleRanges(doc, ranges) {
                 continue;
             }
             if (fence.marker) {
-                if (fenceMatch && fenceMatch[1][0] === fence.marker && fenceMatch[1].length >= fence.length) {
+                if (fenceMatch &&
+                    fenceMatch[1][0] === fence.marker &&
+                    fenceMatch[1].length >= fence.length) {
                     fence.marker = null;
                     fence.length = 0;
                 }
@@ -400,14 +394,14 @@ function findWikiLinksInLine(text, lineStart) {
     const codeSpans = inlineCodeSpans(text);
     let searchFrom = 0;
     while (searchFrom < text.length) {
-        const open = text.indexOf('[[', searchFrom);
+        const open = text.indexOf("[[", searchFrom);
         if (open === -1)
             break;
         if (isInsideAny(open, codeSpans)) {
             searchFrom = open + 2;
             continue;
         }
-        const close = text.indexOf(']]', open + 2);
+        const close = text.indexOf("]]", open + 2);
         if (close === -1)
             break;
         if (isInsideAny(close, codeSpans)) {
@@ -415,7 +409,7 @@ function findWikiLinksInLine(text, lineStart) {
             continue;
         }
         const body = text.slice(open + 2, close);
-        const pipe = body.indexOf('|');
+        const pipe = body.indexOf("|");
         const rawTarget = pipe === -1 ? body : body.slice(0, pipe);
         const rawLabel = pipe === -1 ? null : body.slice(pipe + 1);
         const target = rawTarget.trim();
@@ -468,13 +462,13 @@ function inlineCodeSpans(text) {
     const spans = [];
     let pos = 0;
     while (pos < text.length) {
-        const start = text.indexOf('`', pos);
+        const start = text.indexOf("`", pos);
         if (start === -1)
             break;
         let tickCount = 1;
-        while (text[start + tickCount] === '`')
+        while (text[start + tickCount] === "`")
             tickCount++;
-        const needle = '`'.repeat(tickCount);
+        const needle = "`".repeat(tickCount);
         const end = text.indexOf(needle, start + tickCount);
         if (end === -1)
             break;
@@ -511,7 +505,10 @@ function defaultSerializeSuggestion(suggestion) {
     return `${suggestion.target}|${escapeLabel(suggestion.label)}]]`;
 }
 function escapeLabel(label) {
-    return label.replace(/[\]\|]/g, ' ').replace(/\s+/g, ' ').trim();
+    return label
+        .replace(/[\]\|]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
 }
 function delay(ms) {
     return new Promise((resolve) => window.setTimeout(resolve, ms));

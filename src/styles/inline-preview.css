@@ -112,7 +112,8 @@
  * quotes even though each line is an independent DOM element. */
 .cm-line.cm-atomic-blockquote {
   padding-left: 1rem;
-  border-left: 3px solid var(--atomic-editor-accent-soft, color-mix(in srgb, #7c3aed 72%, white 28%));
+  border-left: 3px solid
+    var(--atomic-editor-accent-soft, color-mix(in srgb, #7c3aed 72%, white 28%));
   color: var(--atomic-editor-fg-muted, #888);
 }
 
@@ -126,7 +127,14 @@
   font-size: 0.92em;
   background: var(--atomic-editor-code-bg, color-mix(in srgb, #2d2d2d 88%, black 12%));
   box-shadow: inset 2px 0 0
-    var(--atomic-editor-code-rail, color-mix(in srgb, var(--atomic-editor-accent, #7c3aed) 45%, var(--atomic-editor-border, #3d3d3d) 55%));
+    var(
+      --atomic-editor-code-rail,
+      color-mix(
+        in srgb,
+        var(--atomic-editor-accent, #7c3aed) 45%,
+        var(--atomic-editor-border, #3d3d3d) 55%
+      )
+    );
   padding-left: 0.75rem;
   padding-right: 0.75rem;
 }
@@ -135,10 +143,7 @@
  * would cover it. A selection-only inline decoration mirrors the same token
  * above the block background while leaving syntax-highlighted text on top. */
 .cm-atomic-fenced-selection {
-  background-color: var(
-    --atomic-editor-selection-bg,
-    color-mix(in srgb, #7c3aed 28%, #1e1e1e 72%)
-  );
+  background-color: var(--atomic-editor-selection-bg, color-mix(in srgb, #7c3aed 28%, #1e1e1e 72%));
 }
 
 /* Inline content marks — applied on the text inside **…**, *…*, `…`,
@@ -398,7 +403,8 @@
 
 .cm-atomic-task-checkbox:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--atomic-editor-accent, #7c3aed) 28%, transparent 72%);
+  box-shadow: 0 0 0 2px
+    color-mix(in srgb, var(--atomic-editor-accent, #7c3aed) 28%, transparent 72%);
 }
 
 /* Forced-colors mode removes box shadows, so retain a visible keyboard
@@ -631,104 +637,6 @@
   background: var(--atomic-editor-border, #3d3d3d);
 }
 
-/* Find-in-document panel — single compact row of input + match
- * counter + prev / next / close icon buttons. Rendered at the top
- * of the editor by the `search()` extension; DOM built in the
- * editor component (`defaultSearchPanel`). Styled to match the
- * rest of the app's control surface: card-toned background,
- * rounded inputs with an accent focus ring, muted-secondary for
- * secondary text. */
-.atomic-editor-search-panel {
-  padding: 0.5rem 0.6rem;
-  background: var(--atomic-editor-bg-panel, #252525);
-  border-bottom: 1px solid var(--atomic-editor-border, #3d3d3d);
-  font-family: var(--atomic-editor-font, system-ui, sans-serif);
-  color: var(--atomic-editor-fg, #dcddde);
-}
-
-.atomic-editor-search-panel form {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.cm-atomic-search-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  padding: 0.4rem 0.65rem;
-  background: var(--atomic-editor-bg-surface, #2d2d2d);
-  border: 1px solid var(--atomic-editor-border, #3d3d3d);
-  border-radius: var(--atomic-editor-radius, 6px);
-  color: inherit;
-  font: inherit;
-  font-size: 0.875rem;
-  outline: none;
-  transition: border-color 0.12s ease, box-shadow 0.12s ease;
-}
-
-.cm-atomic-search-input:focus {
-  border-color: transparent;
-  box-shadow: 0 0 0 2px var(--atomic-editor-accent, #7c3aed);
-}
-
-.cm-atomic-search-input::placeholder {
-  color: var(--atomic-editor-fg-muted, #888);
-}
-
-.cm-atomic-search-count {
-  flex: 0 0 auto;
-  color: var(--atomic-editor-fg-muted, #888);
-  font-size: 0.75rem;
-  white-space: nowrap;
-  min-width: 0;
-  user-select: none;
-}
-
-.cm-atomic-search-btn {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  padding: 0;
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--atomic-editor-radius, 6px);
-  color: var(--atomic-editor-fg-muted, #888);
-  cursor: pointer;
-  transition: background-color 0.12s ease, color 0.12s ease, border-color 0.12s ease;
-}
-
-.cm-atomic-search-btn:hover {
-  background: var(--atomic-editor-bg-surface, #2d2d2d);
-  color: var(--atomic-editor-fg, #dcddde);
-}
-
-.cm-atomic-search-btn:focus-visible {
-  outline: none;
-  border-color: var(--atomic-editor-accent, #7c3aed);
-  color: var(--atomic-editor-fg, #dcddde);
-}
-
-.cm-atomic-search-btn svg {
-  width: 1.125rem;
-  height: 1.125rem;
-}
-
-/* Highlight matches in the document. Active match gets a stronger
- * fill; other matches share the same tone in a lighter shade. The
- * background-color custom properties are pre-mixed in src/index.css
- * to alpha-blend cleanly over whatever theme backdrop is active. */
-.cm-searchMatch {
-  background: var(--atomic-editor-search-bg, rgba(124, 58, 237, 0.28));
-  border-radius: 2px;
-}
-
-.cm-searchMatch-selected {
-  background: var(--atomic-editor-search-bg-active, rgba(124, 58, 237, 0.6));
-}
-
 /* Initial reveal highlight — paired with the `initialRevealText` prop
  * and the `revealText()` imperative method on the editor handle.
  * Starts at a stronger accent-tinted background, settles to a softer
@@ -793,8 +701,6 @@
   --atomic-editor-initial-reveal-bg: color-mix(in srgb, #8250df 16%, transparent 84%);
   --atomic-editor-initial-reveal-bg-strong: color-mix(in srgb, #8250df 30%, transparent 70%);
   --atomic-editor-selection-bg: color-mix(in srgb, #8250df 18%, transparent 82%);
-  --atomic-editor-search-bg: rgba(251, 189, 8, 0.35);
-  --atomic-editor-search-bg-active: rgba(251, 189, 8, 0.6);
   --atomic-editor-hl-keyword: #cf222e;
   --atomic-editor-hl-string: #0a3069;
   --atomic-editor-hl-number: #0550ae;

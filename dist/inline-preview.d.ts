@@ -1,4 +1,4 @@
-import { type Extension } from '@codemirror/state';
+import { type Extension } from "@codemirror/state";
 export interface InlinePreviewConfig {
     /**
      * Called when the user plain-clicks a rendered link. Defaults to

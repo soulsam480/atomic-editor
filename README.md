@@ -47,11 +47,12 @@ base — extracted to stand on its own, and hardened on real user documents.
   autocomplete, and click-to-open — for knowledge-base-style cross-linking.
 - **Smart lists.** Enter continues tight bullets and task checkboxes, Enter on
   an empty item dedents, and `- [ ]` becomes a real, clickable checkbox.
-- **Syntax-highlighted code** for 20+ languages, each grammar lazy-loaded the
-  first time a fence uses it so unused languages never hit the wire.
+- **Bring-your-own syntax highlighting.** No grammars ship with the
+  editor; pass the `@codemirror/lang-*` packages you want, each
+  lazy-loaded the first time a fence uses it so unused languages never
+  hit the wire.
 - **Themed with CSS variables** — dark by default, light via a single
   `data-theme="light"` attribute, every color overridable.
-- **Minimal find panel** (Ctrl/Cmd+F) styled to match the editor.
 
 ## Install
 
@@ -77,18 +78,18 @@ the `@codemirror/lang-*` packages you want highlighted. See
 ## Use
 
 ```ts
-import { createApp, h } from 'vue';
-import { AtomicCodeMirrorEditor } from '@atomic-editor/editor';
-import '@atomic-editor/editor/styles.css';
+import { createApp, h } from "vue";
+import { AtomicCodeMirrorEditor } from "@atomic-editor/editor";
+import "@atomic-editor/editor/styles.css";
 
 createApp({
   render: () =>
     h(AtomicCodeMirrorEditor, {
-      markdownSource: '# Hello\n\nA paragraph.',
+      markdownSource: "# Hello\n\nA paragraph.",
       onMarkdownChange: (md) => console.log(md),
-      onLinkClick: (url) => window.open(url, '_blank', 'noopener,noreferrer'),
+      onLinkClick: (url) => window.open(url, "_blank", "noopener,noreferrer"),
     }),
-}).mount('#app');
+}).mount("#app");
 ```
 
 The editor fills its parent — wrap it in a height-bounded flex or grid
@@ -97,35 +98,32 @@ container.
 ### Imperative handle
 
 Reach for the exposed handle if you need to drive the editor from
-outside — e.g. wire your own toolbar buttons, or open the search panel
-from a global keybinding:
+outside — e.g. wire your own toolbar buttons to focus, undo/redo, or
+jump to a paragraph:
 
 ```ts
-import { h } from 'vue';
-import {
-  AtomicCodeMirrorEditor,
-  useAtomicEditorHandle,
-} from '@atomic-editor/editor';
+import { h } from "vue";
+import { AtomicCodeMirrorEditor, useAtomicEditorHandle } from "@atomic-editor/editor";
 
-const { handle, setHandle } = useAtomicEditorHandle();
+const { handle } = useAtomicEditorHandle();
 
 export default {
   setup() {
     return () =>
-      h('div', [
-        h('button', { onClick: () => handle.value?.openSearch() }, 'Search'),
+      h("div", [
+        h("button", { onClick: () => handle.value?.focus() }, "Focus"),
         h(AtomicCodeMirrorEditor, {
-          ref: setHandle,
-          markdownSource: '…',
+          ref: handle,
+          markdownSource: "…",
         }),
       ]);
   },
 };
 ```
 
-Methods: `focus`, `undo`, `redo`, `openSearch(query?)`, `closeSearch`,
-`revealText(query)`, `isSearchOpen`, `getMarkdown`, `getContentDOM`,
-`setReadOnly(readOnly)`.
+The handle exposes `view` (the underlying `EditorView`), `focus`,
+`undo`, `redo`, `revealText(query)`, `getMarkdown`, `getContentDOM`,
+and `setReadOnly(readOnly)`.
 
 ### Read-only (reading) mode
 
@@ -133,46 +131,39 @@ Pass `readOnly` to render the document as a reading surface, like
 Obsidian's Reading view:
 
 ```ts
-h(AtomicCodeMirrorEditor, { markdownSource: '…', readOnly: true });
+h(AtomicCodeMirrorEditor, { markdownSource: "…", readOnly: true });
 ```
 
 In read-only mode the whole document stays rendered — source never
 reveals under a caret — typing / paste / table editing are disabled,
 and clicking a link (anywhere on it, not just the trailing icon) opens
-it instead of placing a caret. Task checkboxes stay toggleable and
-find-in-document still works.
+it instead of placing a caret. Task checkboxes stay toggleable.
 
 `readOnly` is backed by a CodeMirror `Compartment`, so flipping it
-reconfigures the live view in place — scroll position and search state
-are preserved, no remount. Drive it from a prop, or imperatively via
+reconfigures the live view in place — scroll position is preserved, no
+remount. Drive it from a prop, or imperatively via
 `handle.setReadOnly(true)` for a toolbar toggle outside the component's
 render cycle. For consumers composing a custom editor, the underlying
 `readOnlyFacet` and `readOnlyExtension` are exported too.
 
 ### Arriving from a search result
 
-Two props drop the user near a relevant paragraph on mount:
+`initialRevealText` drops the user near a relevant paragraph on mount:
+a scroll-into-view with a 3.2 s fade-out highlight on the first match —
+no cursor move. Good for "I clicked a search result, take me to the
+paragraph it came from".
 
-- **`initialSearchText`** opens the search panel pre-filled with the
-  query. Full navigation surface — arrow keys to step through matches,
-  close to dismiss. Good when the user explicitly invoked find.
-- **`initialRevealText`** does a less intrusive scroll-into-view with
-  a 3.2 s fade-out highlight on the first match — no panel, no cursor
-  move. Good for "I clicked a search result, take me to the paragraph
-  it came from".
-
-Both accept `string | null`. The reveal matcher falls back
-progressively — exact, whitespace-collapsed, individual lines, then
-truncated prefixes (140 and 80 chars) — so hits still resolve when
-the query came from an LLM-massaged snippet that doesn't match the
-source byte-for-byte. For post-mount reveals, call
-`editorHandle.revealText(query)` via the imperative handle.
+It accepts `string | null`. The reveal matcher falls back progressively
+— exact, whitespace-collapsed, individual lines, then truncated
+prefixes (140 and 80 chars) — so hits still resolve when the query came
+from an LLM-massaged snippet that doesn't match the source
+byte-for-byte. For post-mount reveals, call `handle.revealText(query)`
+via the imperative handle.
 
 The fade highlight uses CSS variables
 `--atomic-editor-initial-reveal-bg` and
-`--atomic-editor-initial-reveal-bg-strong`; override to theme the
-peak and settled colors independently of the main search-match
-palette.
+`--atomic-editor-initial-reveal-bg-strong`; override to theme the peak
+and settled colors.
 
 ## Syntax highlighting
 
@@ -188,21 +179,21 @@ npm install @codemirror/lang-python
 ```
 
 ```ts
-import { h } from 'vue';
-import { LanguageDescription } from '@codemirror/language';
-import { python } from '@codemirror/lang-python';
-import { AtomicCodeMirrorEditor } from '@atomic-editor/editor';
+import { h } from "vue";
+import { LanguageDescription } from "@codemirror/language";
+import { python } from "@codemirror/lang-python";
+import { AtomicCodeMirrorEditor } from "@atomic-editor/editor";
 
 const codeLanguages = [
   LanguageDescription.of({
-    name: 'Python',
-    alias: ['py'],
-    extensions: ['py'],
+    name: "Python",
+    alias: ["py"],
+    extensions: ["py"],
     load: () => Promise.resolve(python()),
   }),
 ];
 
-h(AtomicCodeMirrorEditor, { markdownSource: '…', codeLanguages });
+h(AtomicCodeMirrorEditor, { markdownSource: "…", codeLanguages });
 ```
 
 Any `LanguageDescription` list works — e.g. build one per language from
@@ -218,11 +209,11 @@ resolved / missing state), opens links on click, and offers autocomplete as
 soon as you type `[[`:
 
 ```ts
-import { h } from 'vue';
-import { AtomicCodeMirrorEditor, wikiLinks } from '@atomic-editor/editor';
+import { h } from "vue";
+import { AtomicCodeMirrorEditor, wikiLinks } from "@atomic-editor/editor";
 
 h(AtomicCodeMirrorEditor, {
-  markdownSource: 'See [[atom-42|the design doc]] for details.',
+  markdownSource: "See [[atom-42|the design doc]] for details.",
   extensions: [
     wikiLinks({
       suggest: async (query) => store.search(query), // autocomplete source
@@ -249,46 +240,46 @@ The package ships a **light variant** that activates whenever
 re-maps the same variables.
 
 ```html
-<html data-theme="light">…</html>
+<html data-theme="light">
+  …
+</html>
 ```
 
-| Variable                              | Dark default (auto-light on `[data-theme="light"]`) |
-| ------------------------------------- | --------------------------------------------------- |
-| `--atomic-editor-font`                | system sans                                         |
-| `--atomic-editor-font-mono`           | system mono                                         |
-| `--atomic-editor-body-size`           | `1.0625rem`                                         |
-| `--atomic-editor-body-leading`        | `1.7`                                               |
-| `--atomic-editor-measure`             | `70ch`                                              |
-| `--atomic-editor-fg`                  | `#dcddde`                                           |
-| `--atomic-editor-fg-muted`            | `#888`                                              |
-| `--atomic-editor-fg-faint`            | `#666`                                              |
-| `--atomic-editor-bg`                  | `#1e1e1e`                                           |
-| `--atomic-editor-bg-panel`            | `#252525`                                           |
-| `--atomic-editor-bg-surface`          | `#2d2d2d`                                           |
-| `--atomic-editor-border`              | `#3d3d3d`                                           |
-| `--atomic-editor-accent`              | `#7c3aed`                                           |
-| `--atomic-editor-accent-bright`       | `#a78bfa`                                           |
-| `--atomic-editor-accent-soft`         | blockquote rail / reveal tint                       |
-| `--atomic-editor-link`                | `#818cf8`                                           |
-| `--atomic-editor-link-hover`          | `#a5b4fc`                                           |
-| `--atomic-editor-code-bg`             | subtle dark panel                                   |
-| `--atomic-editor-selection-bg`        | accent-tinted 28%                                   |
-| `--atomic-editor-search-bg`           | accent-tinted 28%                                   |
-| `--atomic-editor-search-bg-active`    | accent-tinted 60%                                   |
-| **Code-token colors** (Palenight)     |                                                     |
-| `--atomic-editor-hl-keyword`          | `#c792ea`                                           |
-| `--atomic-editor-hl-string`           | `#c3e88d`                                           |
-| `--atomic-editor-hl-number`           | `#f78c6c`                                           |
-| `--atomic-editor-hl-comment`          | `#6a7a82`                                           |
-| `--atomic-editor-hl-type`             | `#ffcb6b`                                           |
-| `--atomic-editor-hl-function`         | `#82aaff`                                           |
-| `--atomic-editor-hl-property`         | `#82aaff`                                           |
-| `--atomic-editor-hl-regexp`           | `#f07178`                                           |
-| `--atomic-editor-hl-escape`           | `#89ddff`                                           |
-| `--atomic-editor-hl-tag`              | `#f07178`                                           |
-| `--atomic-editor-hl-variable`         | `#eeffff`                                           |
-| `--atomic-editor-hl-operator`         | `#89ddff`                                           |
-| `--atomic-editor-hl-invalid`          | `#ff5370`                                           |
+| Variable                           | Dark default (auto-light on `[data-theme="light"]`) |
+| ---------------------------------- | --------------------------------------------------- |
+| `--atomic-editor-font`             | system sans                                         |
+| `--atomic-editor-font-mono`        | system mono                                         |
+| `--atomic-editor-body-size`        | `1.0625rem`                                         |
+| `--atomic-editor-body-leading`     | `1.7`                                               |
+| `--atomic-editor-measure`          | `70ch`                                              |
+| `--atomic-editor-fg`               | `#dcddde`                                           |
+| `--atomic-editor-fg-muted`         | `#888`                                              |
+| `--atomic-editor-fg-faint`         | `#666`                                              |
+| `--atomic-editor-bg`               | `#1e1e1e`                                           |
+| `--atomic-editor-bg-panel`         | `#252525`                                           |
+| `--atomic-editor-bg-surface`       | `#2d2d2d`                                           |
+| `--atomic-editor-border`           | `#3d3d3d`                                           |
+| `--atomic-editor-accent`           | `#7c3aed`                                           |
+| `--atomic-editor-accent-bright`    | `#a78bfa`                                           |
+| `--atomic-editor-accent-soft`      | blockquote rail / reveal tint                       |
+| `--atomic-editor-link`             | `#818cf8`                                           |
+| `--atomic-editor-link-hover`       | `#a5b4fc`                                           |
+| `--atomic-editor-code-bg`          | subtle dark panel                                   |
+| `--atomic-editor-selection-bg`     | accent-tinted 28%                                   |
+| **Code-token colors** (Palenight)  |                                                     |
+| `--atomic-editor-hl-keyword`       | `#c792ea`                                           |
+| `--atomic-editor-hl-string`        | `#c3e88d`                                           |
+| `--atomic-editor-hl-number`        | `#f78c6c`                                           |
+| `--atomic-editor-hl-comment`       | `#6a7a82`                                           |
+| `--atomic-editor-hl-type`          | `#ffcb6b`                                           |
+| `--atomic-editor-hl-function`      | `#82aaff`                                           |
+| `--atomic-editor-hl-property`      | `#82aaff`                                           |
+| `--atomic-editor-hl-regexp`        | `#f07178`                                           |
+| `--atomic-editor-hl-escape`        | `#89ddff`                                           |
+| `--atomic-editor-hl-tag`           | `#f07178`                                           |
+| `--atomic-editor-hl-variable`      | `#eeffff`                                           |
+| `--atomic-editor-hl-operator`      | `#89ddff`                                           |
+| `--atomic-editor-hl-invalid`       | `#ff5370`                                           |
 
 ## Extending with plugins
 
@@ -299,22 +290,24 @@ collaboration (yjs), vim mode, or anything else. (The
 [wiki-links](#wiki-links) extension above is built with exactly this hook.)
 
 ```ts
-import { h } from 'vue';
-import { autocompletion, type CompletionContext } from '@codemirror/autocomplete';
+import { h } from "vue";
+import { autocompletion, type CompletionContext } from "@codemirror/autocomplete";
 
 const hashtags = autocompletion({
-  override: [(ctx: CompletionContext) => {
-    const match = ctx.matchBefore(/#\w*$/);
-    if (!match) return null;
-    return {
-      from: match.from + 1,
-      options: myTagStore.list().map((tag) => ({ label: tag })),
-    };
-  }],
+  override: [
+    (ctx: CompletionContext) => {
+      const match = ctx.matchBefore(/#\w*$/);
+      if (!match) return null;
+      return {
+        from: match.from + 1,
+        options: myTagStore.list().map((tag) => ({ label: tag })),
+      };
+    },
+  ],
 });
 
 h(AtomicCodeMirrorEditor, {
-  markdownSource: '…',
+  markdownSource: "…",
   extensions: [hashtags],
 });
 ```
@@ -332,13 +325,13 @@ is exported individually so you can assemble a fully custom editor:
 ```ts
 import {
   inlinePreview, // live preview decorations
-  imageBlocks,   // rendered image widgets
-  tables,        // WYSIWYG table widget
-  wikiLinks,     // [[...]] links
+  imageBlocks, // rendered image widgets
+  tables, // WYSIWYG table widget
+  wikiLinks, // [[...]] links
   atomicEditorTheme,
   atomicMarkdownSyntax,
   extendEmphasisPair,
-} from '@atomic-editor/editor';
+} from "@atomic-editor/editor";
 ```
 
 You could build an editor that includes `inlinePreview()` + `tables()`

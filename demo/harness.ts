@@ -7,15 +7,12 @@ import {
   onMounted,
   ref,
   watch,
-} from 'vue';
-import {
-  AtomicCodeMirrorEditor,
-  type AtomicCodeMirrorEditorHandle,
-} from '@atomic-editor/editor';
-import '@atomic-editor/editor/styles.css';
-import './harness.css';
+} from "vue";
+import { AtomicCodeMirrorEditor, type AtomicCodeMirrorEditorHandle } from "@atomic-editor/editor";
+import "@atomic-editor/editor/styles.css";
+import "./harness.css";
 
-type HarnessTheme = 'dark' | 'light';
+type HarnessTheme = "dark" | "light";
 
 interface HarnessOptions {
   readOnly?: boolean;
@@ -36,13 +33,13 @@ declare global {
 }
 
 const Harness = defineComponent({
-  name: 'Harness',
+  name: "Harness",
   setup() {
     const editor = ref<AtomicCodeMirrorEditorHandle | null>(null);
     const openedUrls = ref<string[]>([]);
-    const markdown = ref('# harness ready');
+    const markdown = ref("# harness ready");
     const readOnly = ref(false);
-    const theme = ref<HarnessTheme>('dark');
+    const theme = ref<HarnessTheme>("dark");
     const revision = ref(0);
     let pendingLoad: (() => void) | null = null;
 
@@ -54,7 +51,7 @@ const Harness = defineComponent({
             pendingLoad = resolve;
             markdown.value = nextMarkdown;
             readOnly.value = options.readOnly ?? false;
-            theme.value = options.theme ?? 'dark';
+            theme.value = options.theme ?? "dark";
             revision.value += 1;
           });
         },
@@ -62,7 +59,7 @@ const Harness = defineComponent({
           editor.value?.focus();
         },
         getMarkdown() {
-          return editor.value?.getMarkdown() ?? '';
+          return editor.value?.getMarkdown() ?? "";
         },
         getOpenedUrls() {
           return [...openedUrls.value];
@@ -89,18 +86,18 @@ const Harness = defineComponent({
         await nextTick();
         requestAnimationFrame(() => requestAnimationFrame(resolve));
       },
-      { flush: 'post', immediate: true },
+      { flush: "post", immediate: true },
     );
 
     return () =>
       h(
-        'main',
+        "main",
         {
-          class: 'harness-shell',
-          'data-harness-revision': String(revision.value),
+          class: "harness-shell",
+          "data-harness-revision": String(revision.value),
         },
         [
-          h('div', { class: 'harness-editor' }, [
+          h("div", { class: "harness-editor" }, [
             h(AtomicCodeMirrorEditor, {
               ref: editor,
               documentId: `fixture-${revision.value}`,
@@ -116,6 +113,6 @@ const Harness = defineComponent({
   },
 });
 
-const root = document.getElementById('root');
-if (!root) throw new Error('missing #root');
+const root = document.getElementById("root");
+if (!root) throw new Error("missing #root");
 createApp(Harness).mount(root);

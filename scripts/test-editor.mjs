@@ -14,24 +14,24 @@
  *   HARNESS_URL=http://foo:5173 node scripts/test-editor.mjs
  */
 
-import { mkdirSync, rmSync } from 'node:fs';
-import path from 'node:path';
-import process from 'node:process';
-import { fileURLToPath } from 'node:url';
+import { mkdirSync, rmSync } from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-import { chromium } from 'playwright';
-import { createServer } from 'vite';
+import { chromium } from "playwright";
+import { createServer } from "vite";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const repoRoot = path.resolve(__dirname, '..');
+const repoRoot = path.resolve(__dirname, "..");
 
 const args = new Set(process.argv.slice(2));
-const headed = args.has('--headed');
-const skipDev = args.has('--skip-dev');
-const base = process.env.HARNESS_URL || 'http://localhost:5173';
+const headed = args.has("--headed");
+const skipDev = args.has("--skip-dev");
+const base = process.env.HARNESS_URL || "http://localhost:5173";
 
-const SCREENSHOT_DIR = path.join(repoRoot, '.harness-screenshots');
+const SCREENSHOT_DIR = path.join(repoRoot, ".harness-screenshots");
 rmSync(SCREENSHOT_DIR, { recursive: true, force: true });
 mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
@@ -48,7 +48,7 @@ async function isServerUp(url) {
 
 async function ensureServer() {
   if (await isServerUp(base)) {
-    log('info', `using existing dev server at ${base}`);
+    log("info", `using existing dev server at ${base}`);
     return null;
   }
   if (skipDev) {
@@ -56,13 +56,11 @@ async function ensureServer() {
   }
 
   const target = new URL(base);
-  if (target.protocol !== 'http:') {
-    throw new Error(
-      `cannot auto-start a dev server for ${base}; use an http URL or --skip-dev`,
-    );
+  if (target.protocol !== "http:") {
+    throw new Error(`cannot auto-start a dev server for ${base}; use an http URL or --skip-dev`);
   }
 
-  log('info', 'starting vite dev server…');
+  log("info", "starting vite dev server…");
   const start = Date.now();
   // Own the Vite server directly instead of spawning `npm run dev`.
   // Killing the npm wrapper left its Vite/esbuild descendants alive on
@@ -79,7 +77,7 @@ async function ensureServer() {
 
   while (Date.now() - start < 60_000) {
     if (await isServerUp(base)) {
-      log('info', `dev server ready (${Math.round((Date.now() - start) / 100) / 10}s)`);
+      log("info", `dev server ready (${Math.round((Date.now() - start) / 100) / 10}s)`);
       return server;
     }
     await sleep(400);
@@ -98,19 +96,36 @@ const results = [];
 // Uncaught page errors, captured so probes can assert that a given
 // interaction produced none (e.g. the type-while-frozen regression).
 const pageErrors = [];
-const COLORS = { reset: '\x1b[0m', dim: '\x1b[2m', red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m', cyan: '\x1b[36m' };
+const COLORS = {
+  reset: "\x1b[0m",
+  dim: "\x1b[2m",
+  red: "\x1b[31m",
+  green: "\x1b[32m",
+  yellow: "\x1b[33m",
+  cyan: "\x1b[36m",
+};
 function color(c, s) {
   return process.stdout.isTTY ? `${COLORS[c]}${s}${COLORS.reset}` : s;
 }
 
 function log(level, msg) {
-  const tag = level === 'fail' ? color('red', 'FAIL') : level === 'warn' ? color('yellow', 'WARN') : level === 'ok' ? color('green', ' OK ') : color('cyan', 'INFO');
+  const tag =
+    level === "fail"
+      ? color("red", "FAIL")
+      : level === "warn"
+        ? color("yellow", "WARN")
+        : level === "ok"
+          ? color("green", " OK ")
+          : color("cyan", "INFO");
   console.log(`[${tag}] ${msg}`);
 }
 
 function record(name, status, detail) {
   results.push({ name, status, detail });
-  log(status === 'pass' ? 'ok' : status === 'warn' ? 'warn' : status === 'fail' ? 'fail' : 'info', `${name.padEnd(38)} ${detail}`);
+  log(
+    status === "pass" ? "ok" : status === "warn" ? "warn" : status === "fail" ? "fail" : "info",
+    `${name.padEnd(38)} ${detail}`,
+  );
 }
 
 // ---------- CLS measurement helpers ----------
@@ -159,7 +174,7 @@ function topShiftSources(entries, n) {
   const byNode = new Map();
   for (const e of entries) {
     for (const s of e.sources || []) {
-      const key = `${s.node}.${(s.className || '').toString().split(' ').slice(0, 2).join('.')}`;
+      const key = `${s.node}.${(s.className || "").toString().split(" ").slice(0, 2).join(".")}`;
       byNode.set(key, (byNode.get(key) || 0) + e.value / Math.max(1, e.sources.length));
     }
   }
@@ -167,17 +182,17 @@ function topShiftSources(entries, n) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, n)
     .map(([k, v]) => `${k}(${v.toFixed(3)})`)
-    .join(', ');
+    .join(", ");
 }
 
 // ---------- probes ----------
 
 async function probeIdle(page) {
-  await page.waitForSelector('.cm-editor');
+  await page.waitForSelector(".cm-editor");
   await page.waitForTimeout(300);
   const cls = await measureCLS(page, 1500);
-  const status = cls.total < 0.05 ? 'pass' : cls.total < 0.2 ? 'warn' : 'fail';
-  record('idle CLS (1.5s post-mount)', status, `total=${cls.total.toFixed(3)} shifts=${cls.count}`);
+  const status = cls.total < 0.05 ? "pass" : cls.total < 0.2 ? "warn" : "fail";
+  record("idle CLS (1.5s post-mount)", status, `total=${cls.total.toFixed(3)} shifts=${cls.count}`);
   return cls;
 }
 
@@ -190,21 +205,21 @@ async function probeCursorPingPong(page) {
   // (task-list probe ctrl+End's to doc end). CM6 virtualizes, so lines
   // outside the viewport aren't in the DOM and locators can't find
   // them. Reset scroll before we target.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(250);
 
-  const h2 = page.locator('.cm-line.cm-atomic-h2').first();
+  const h2 = page.locator(".cm-line.cm-atomic-h2").first();
   const para = page.locator('.cm-line:not([class*="cm-atomic"])').nth(4);
   if ((await h2.count()) === 0 || (await para.count()) === 0) {
-    record('cursor ping-pong CLS', 'fail', 'missing target lines');
+    record("cursor ping-pong CLS", "fail", "missing target lines");
     return null;
   }
   const h2box = await h2.boundingBox();
   const pbox = await para.boundingBox();
   if (!h2box || !pbox) {
-    record('cursor ping-pong CLS', 'fail', 'no bbox');
+    record("cursor ping-pong CLS", "fail", "no bbox");
     return null;
   }
   const cls = await measureCLS(page, 2500, async () => {
@@ -215,12 +230,12 @@ async function probeCursorPingPong(page) {
       await page.waitForTimeout(160);
     }
   });
-  const status = cls.total < 0.05 ? 'pass' : cls.total < 0.2 ? 'warn' : 'fail';
+  const status = cls.total < 0.05 ? "pass" : cls.total < 0.2 ? "warn" : "fail";
   const topSrc = topShiftSources(cls.entries, 4);
   record(
-    'ping-pong CLS (10 moves)',
+    "ping-pong CLS (10 moves)",
     status,
-    `total=${cls.total.toFixed(3)} shifts=${cls.count}${topSrc ? ` sources=${topSrc}` : ''}`,
+    `total=${cls.total.toFixed(3)} shifts=${cls.count}${topSrc ? ` sources=${topSrc}` : ""}`,
   );
   return cls;
 }
@@ -230,16 +245,16 @@ async function probeColdLoadH1Hidden(page) {
   // prefix visible). CM6's default selection is cursor(0), which
   // would otherwise make the first line "active" even before the
   // user touches the editor.
-  const h1 = page.locator('.cm-line.cm-atomic-h1').first();
+  const h1 = page.locator(".cm-line.cm-atomic-h1").first();
   if ((await h1.count()) === 0) {
-    record('cold load: H1 syntax hidden', 'fail', 'no H1 line');
+    record("cold load: H1 syntax hidden", "fail", "no H1 line");
     return;
   }
-  const text = (await h1.textContent()) ?? '';
-  const hidden = !text.trim().startsWith('#');
+  const text = (await h1.textContent()) ?? "";
+  const hidden = !text.trim().startsWith("#");
   record(
-    'cold load: H1 syntax hidden',
-    hidden ? 'pass' : 'fail',
+    "cold load: H1 syntax hidden",
+    hidden ? "pass" : "fail",
     `text=${JSON.stringify(text.slice(0, 40))}`,
   );
 }
@@ -249,21 +264,21 @@ async function probeClickFreeze(page) {
   // should NOT appear immediately (that's what shifts layout under the
   // cursor and turns clicks into micro-drags). It should appear a beat
   // after the mouse is released, once the freeze tail expires.
-  const h2 = page.locator('.cm-line.cm-atomic-h2').first();
+  const h2 = page.locator(".cm-line.cm-atomic-h2").first();
   if ((await h2.count()) === 0) {
-    record('click freeze: heading stays rendered mid-click', 'fail', 'no H2 line');
+    record("click freeze: heading stays rendered mid-click", "fail", "no H2 line");
     return;
   }
   const box = await h2.boundingBox();
   if (!box) {
-    record('click freeze: heading stays rendered mid-click', 'fail', 'no bbox');
+    record("click freeze: heading stays rendered mid-click", "fail", "no bbox");
     return;
   }
 
   // Measure the line text before the click — we expect `## ` to be
   // hidden, so the text starts with the heading's first non-syntax
   // character.
-  const textBefore = (await h2.textContent())?.trim() ?? '';
+  const textBefore = (await h2.textContent())?.trim() ?? "";
 
   // Let any in-flight work from the prior probe settle before we try
   // to race the freeze mechanic. Without this buffer the probe starts
@@ -291,7 +306,7 @@ async function probeClickFreeze(page) {
   // hidden syntax.
   const samples = [];
   for (let i = 0; i < 5; i++) {
-    const text = (await h2.textContent())?.trim() ?? '';
+    const text = (await h2.textContent())?.trim() ?? "";
     samples.push(text);
     if (i < 4) await page.waitForTimeout(15);
   }
@@ -301,19 +316,19 @@ async function probeClickFreeze(page) {
   const textDuringFreeze = samples.find((s) => /^##\s/.test(s)) ?? samples[0];
 
   record(
-    'click freeze: heading stays rendered mid-click',
-    stayedRendered ? 'pass' : 'fail',
+    "click freeze: heading stays rendered mid-click",
+    stayedRendered ? "pass" : "fail",
     `before="${textBefore.slice(0, 40)}" duringFreeze="${textDuringFreeze.slice(0, 40)}" samples=${samples.length}`,
   );
 
   // After the freeze tail (100ms from mouseup), syntax should reveal.
   await page.waitForTimeout(250);
-  const textAfterFreeze = (await h2.textContent())?.trim() ?? '';
+  const textAfterFreeze = (await h2.textContent())?.trim() ?? "";
   const revealed = /^##\s/.test(textAfterFreeze);
 
   record(
-    'click freeze: syntax revealed after tail',
-    revealed ? 'pass' : 'fail',
+    "click freeze: syntax revealed after tail",
+    revealed ? "pass" : "fail",
     `afterFreeze="${textAfterFreeze.slice(0, 40)}"`,
   );
 
@@ -321,8 +336,8 @@ async function probeClickFreeze(page) {
   // be a collapsed cursor, not a range.
   const selLen = await page.evaluate(() => window.getSelection()?.toString().length ?? 0);
   record(
-    'click freeze: no accidental selection',
-    selLen === 0 ? 'pass' : 'fail',
+    "click freeze: no accidental selection",
+    selLen === 0 ? "pass" : "fail",
     `selectionLen=${selLen}`,
   );
 }
@@ -339,14 +354,14 @@ async function probeTypeDuringFreeze(page) {
   // heightmap ("No tile at position …" → broken scrollIntoView). This
   // reproduces it: hold the pointer down on a heading (freeze stays on)
   // and type while held, then assert no uncaught errors fired.
-  const h2 = page.locator('.cm-line.cm-atomic-h2').first();
+  const h2 = page.locator(".cm-line.cm-atomic-h2").first();
   if ((await h2.count()) === 0) {
-    record('type-during-freeze: no decoration crash', 'fail', 'no H2 line');
+    record("type-during-freeze: no decoration crash", "fail", "no H2 line");
     return;
   }
   const box = await h2.boundingBox();
   if (!box) {
-    record('type-during-freeze: no decoration crash', 'fail', 'no bbox');
+    record("type-during-freeze: no decoration crash", "fail", "no bbox");
     return;
   }
 
@@ -356,7 +371,7 @@ async function probeTypeDuringFreeze(page) {
   // held — the keystrokes land squarely inside the freeze window.
   await page.mouse.move(box.x + Math.min(box.width / 3, 80), box.y + box.height / 2);
   await page.mouse.down();
-  await page.keyboard.type('typed while frozen');
+  await page.keyboard.type("typed while frozen");
   await page.mouse.up();
   // Let the freeze tail expire and any faulty measure/scroll fire.
   await page.waitForTimeout(300);
@@ -369,8 +384,8 @@ async function probeTypeDuringFreeze(page) {
       /Cannot destructure property 'tile'/i.test(m),
   );
   record(
-    'type-during-freeze: no decoration crash',
-    decorationCrash.length === 0 ? 'pass' : 'fail',
+    "type-during-freeze: no decoration crash",
+    decorationCrash.length === 0 ? "pass" : "fail",
     decorationCrash.length === 0
       ? `no errors across ${fired.length} page event(s)`
       : `${decorationCrash.length} crash(es): ${JSON.stringify(decorationCrash[0].slice(0, 80))}`,
@@ -391,23 +406,23 @@ async function probeFenceVisibility(page) {
   // Image widgets in the showcase reserve real height via
   // `estimatedHeight`, which can push the code block below the
   // initial viewport. Scroll down until a fenced-code line renders.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(150);
   for (let step = 0; step < 10; step++) {
-    const visible = await page.locator('.cm-line.cm-atomic-fenced-code').count();
+    const visible = await page.locator(".cm-line.cm-atomic-fenced-code").count();
     if (visible >= 3) break;
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 400;
     });
     await page.waitForTimeout(120);
   }
 
-  const codeLines = page.locator('.cm-line.cm-atomic-fenced-code');
+  const codeLines = page.locator(".cm-line.cm-atomic-fenced-code");
   const count = await codeLines.count();
   if (count < 3) {
-    record('fence stays visible while editing code', 'fail', `only ${count} fenced-code lines`);
+    record("fence stays visible while editing code", "fail", `only ${count} fenced-code lines`);
     return;
   }
 
@@ -418,7 +433,7 @@ async function probeFenceVisibility(page) {
   const interior = codeLines.nth(1);
   const interiorBox = await interior.boundingBox();
   if (!interiorBox) {
-    record('fence stays visible while editing code', 'fail', 'no interior bbox');
+    record("fence stays visible while editing code", "fail", "no interior bbox");
     return;
   }
 
@@ -427,11 +442,11 @@ async function probeFenceVisibility(page) {
   // Past the freeze tail so the decoration rebuild has applied.
   await page.waitForTimeout(200);
 
-  const fenceText = (await openFence.textContent())?.trim() ?? '';
+  const fenceText = (await openFence.textContent())?.trim() ?? "";
   const visible = /^```/.test(fenceText);
   record(
-    'fence stays visible while editing code',
-    visible ? 'pass' : 'fail',
+    "fence stays visible while editing code",
+    visible ? "pass" : "fail",
     `fenceLine="${fenceText.slice(0, 40)}"`,
   );
 }
@@ -442,20 +457,20 @@ async function runNewBulletListScenario(page, label, setup, screenshotName) {
   await page.waitForTimeout(250);
   await page.screenshot({ path: path.join(SCREENSHOT_DIR, screenshotName), fullPage: false });
 
-  const itemA = page.locator('.cm-line', { hasText: `${uniq}A` }).first();
-  const itemB = page.locator('.cm-line', { hasText: `${uniq}B` }).first();
+  const itemA = page.locator(".cm-line", { hasText: `${uniq}A` }).first();
+  const itemB = page.locator(".cm-line", { hasText: `${uniq}B` }).first();
   if ((await itemA.count()) === 0 || (await itemB.count()) === 0) {
-    record(`list gap [${label}]`, 'fail', 'items not found');
+    record(`list gap [${label}]`, "fail", "items not found");
     return;
   }
   const aBox = await itemA.boundingBox();
   const bBox = await itemB.boundingBox();
   if (!aBox || !bBox) {
-    record(`list gap [${label}]`, 'fail', 'no bbox');
+    record(`list gap [${label}]`, "fail", "no bbox");
     return;
   }
   const gap = bBox.y - (aBox.y + aBox.height);
-  const status = gap < 8 ? 'pass' : gap < 40 ? 'warn' : 'fail';
+  const status = gap < 8 ? "pass" : gap < 40 ? "warn" : "fail";
 
   // Collect every .cm-line that sits between itemA and itemB vertically
   // and dump their text so we can see whether an extra blank line
@@ -463,13 +478,13 @@ async function runNewBulletListScenario(page, label, setup, screenshotName) {
   // rendered layout).
   const between = await page.evaluate(
     ({ yA, yB }) => {
-      const lines = Array.from(document.querySelectorAll('.cm-line'));
+      const lines = Array.from(document.querySelectorAll(".cm-line"));
       return lines
         .map((el) => {
           const r = el.getBoundingClientRect();
           return {
             mid: r.top + r.height / 2,
-            text: el.textContent ?? '',
+            text: el.textContent ?? "",
             cls: el.className,
           };
         })
@@ -478,24 +493,24 @@ async function runNewBulletListScenario(page, label, setup, screenshotName) {
     },
     { yA: aBox.y + aBox.height / 2, yB: bBox.y + bBox.height / 2 },
   );
-  const betweenStr = between.map((b) => `"${b.text.slice(0, 30)}"[${b.cls.replace(/cm-/g, '')}]`).join(' | ');
+  const betweenStr = between
+    .map((b) => `"${b.text.slice(0, 30)}"[${b.cls.replace(/cm-/g, "")}]`)
+    .join(" | ");
 
   // Dump a wide window of .cm-line divs around the typed items so we
   // can see the full line structure the editor produced.
   const docExcerpt = await page.evaluate((marker) => {
-    const lines = Array.from(document.querySelectorAll('.cm-line'));
-    const idx = lines.findIndex((el) => (el.textContent || '').includes(marker + 'A'));
+    const lines = Array.from(document.querySelectorAll(".cm-line"));
+    const idx = lines.findIndex((el) => (el.textContent || "").includes(marker + "A"));
     if (idx < 0) return null;
     const slice = lines.slice(Math.max(0, idx - 5), idx + 5);
-    return slice
-      .map((el) => `[${(el.textContent || '').slice(0, 30)}]`)
-      .join(' / ');
+    return slice.map((el) => `[${(el.textContent || "").slice(0, 30)}]`).join(" / ");
   }, uniq);
 
   record(
     `list gap [${label}]`,
     status,
-    `gap=${gap.toFixed(1)}px between=${betweenStr || '(none)'} doc="${docExcerpt}"`,
+    `gap=${gap.toFixed(1)}px between=${betweenStr || "(none)"} doc="${docExcerpt}"`,
   );
 }
 
@@ -503,73 +518,74 @@ async function probeNewBulletList(page) {
   // Scenario A: after a plain paragraph, two blank lines, then list.
   // Reset scroll first — earlier probes (fence-visibility) scroll
   // down, and the .nth(3) plain-line target is viewport-relative.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(200);
 
   await runNewBulletListScenario(
     page,
-    'after para +2 blanks',
+    "after para +2 blanks",
     async (p, uniq) => {
       const para = p.locator('.cm-line:not([class*="cm-atomic"])').nth(3);
       const box = await para.boundingBox();
       await p.mouse.click(box.x + 40, box.y + box.height / 2);
       await p.waitForTimeout(180);
-      await p.keyboard.press('End');
-      await p.keyboard.press('Enter');
-      await p.keyboard.press('Enter');
+      await p.keyboard.press("End");
+      await p.keyboard.press("Enter");
+      await p.keyboard.press("Enter");
       await p.keyboard.type(`- ${uniq}A`);
-      await p.keyboard.press('Enter');
+      await p.keyboard.press("Enter");
       await p.keyboard.type(`${uniq}B`);
     },
-    '20-list-after-para.png',
+    "20-list-after-para.png",
   );
 
   // Scenario B: immediately after a heading, single Enter, then list.
   // (Obsidian and GFM behave differently about tight/loose lists here.)
   await runNewBulletListScenario(
     page,
-    'after h2 +1 blank',
+    "after h2 +1 blank",
     async (p, uniq) => {
       // Reset to the top so the showcase H2 is reliably mounted.
       // Originally this targeted nth(1) to "avoid the first", but
       // as the showcase grew (tables, images, HR) section 1's H2
       // moved outside CM6's initial viewport — the nth(0) showcase
       // H2 is always present at the top.
-      await p.locator('.cm-scroller').evaluate((el) => { el.scrollTop = 0; });
+      await p.locator(".cm-scroller").evaluate((el) => {
+        el.scrollTop = 0;
+      });
       await p.waitForTimeout(200);
-      const h2 = p.locator('.cm-line.cm-atomic-h2').first();
+      const h2 = p.locator(".cm-line.cm-atomic-h2").first();
       const box = await h2.boundingBox();
       await p.mouse.click(box.x + 40, box.y + box.height / 2);
       await p.waitForTimeout(180);
-      await p.keyboard.press('End');
-      await p.keyboard.press('Enter');
-      await p.keyboard.press('Enter');
+      await p.keyboard.press("End");
+      await p.keyboard.press("Enter");
+      await p.keyboard.press("Enter");
       await p.keyboard.type(`- ${uniq}A`);
-      await p.keyboard.press('Enter');
+      await p.keyboard.press("Enter");
       await p.keyboard.type(`${uniq}B`);
     },
-    '21-list-after-h2.png',
+    "21-list-after-h2.png",
   );
-
 }
 
 async function probeNestedListExit(page) {
   // Regression guard: pressing Enter on an empty nested list item
   // should drop one level of indent per press, ending with a clean
   // unindented cursor — no orphan whitespace from the item's indent.
-  const content = page.locator('.cm-content').first();
+  const content = page.locator(".cm-content").first();
   await content.click();
   await page.waitForTimeout(180);
-  await page.keyboard.press('ControlOrMeta+End');
-  await page.keyboard.press('Enter');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
 
   const uniq = `NEST_${Date.now().toString(36).slice(-4)}`;
   // Build a two-level list: `- outer` + nested `  - inner`.
   await page.keyboard.type(`- outer-${uniq}`);
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("Enter");
   // `  - ` prefix — use the auto-continuation from Enter on outer,
   // then indent manually by typing two spaces + the marker. Explicit
   // control makes the test less brittle to auto-indent behavior.
@@ -577,11 +593,11 @@ async function probeNestedListExit(page) {
   await page.waitForTimeout(200);
 
   // Enter 1: continues with `  - ` (empty nested item).
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("Enter");
   // Enter 2: pop to outer level → line becomes `- `.
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("Enter");
   // Enter 3: top-level empty → line fully cleared.
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("Enter");
   await page.waitForTimeout(250);
 
   // Read the line text where the cursor is now. The line should be
@@ -591,16 +607,15 @@ async function probeNestedListExit(page) {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return null;
     let node = sel.anchorNode;
-    while (node && !(node instanceof Element && node.classList.contains('cm-line'))) {
+    while (node && !(node instanceof Element && node.classList.contains("cm-line"))) {
       node = node.parentNode;
     }
-    return node ? node.textContent ?? '' : null;
+    return node ? (node.textContent ?? "") : null;
   });
 
-  const status =
-    exitLineText !== null && !/^\s/.test(exitLineText) ? 'pass' : 'fail';
+  const status = exitLineText !== null && !/^\s/.test(exitLineText) ? "pass" : "fail";
   record(
-    'nested list: clean exit after 3 Enters',
+    "nested list: clean exit after 3 Enters",
     status,
     `exit line text = ${JSON.stringify(exitLineText)}`,
   );
@@ -608,11 +623,11 @@ async function probeNestedListExit(page) {
 
 async function probeListItemLayout(page) {
   await resetToCanonical(page);
-  const content = page.locator('.cm-content').first();
+  const content = page.locator(".cm-content").first();
   await content.click();
-  await page.keyboard.press('ControlOrMeta+End');
-  await page.keyboard.press('Enter');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
 
   const id = `LAYOUT_${Date.now().toString(36).slice(-4)}`;
   const source = [
@@ -620,27 +635,27 @@ async function probeListItemLayout(page) {
     `${id}_ROOT_CONT`,
     `  - [ ] ${id}_NEST no`,
     `    ${id}_NEST_CONT`,
-    '',
+    "",
     `${id}_SEPARATOR`,
-    '',
+    "",
     `   - ${id}_ODD`,
     `     ${id}_ODD_CONT`,
     `     1. ${id}_ORDERED`,
     `        ${id}_ORDERED_CONT`,
-  ].join('\n');
+  ].join("\n");
   await page.keyboard.insertText(source);
   await page.waitForTimeout(300);
 
   const positions = await page.evaluate((prefix) => {
     const leftFor = (suffix) => {
       const marker = `${prefix}_${suffix}`;
-      const line = Array.from(document.querySelectorAll('.cm-line')).find(
-        (candidate) => (candidate.textContent || '').includes(marker),
+      const line = Array.from(document.querySelectorAll(".cm-line")).find((candidate) =>
+        (candidate.textContent || "").includes(marker),
       );
       if (!line) return null;
       const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
       for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-        const index = (node.nodeValue || '').indexOf(marker);
+        const index = (node.nodeValue || "").indexOf(marker);
         if (index < 0) continue;
         const range = document.createRange();
         range.setStart(node, index);
@@ -650,20 +665,19 @@ async function probeListItemLayout(page) {
       return null;
     };
     return {
-      root: leftFor('ROOT'),
-      rootContinuation: leftFor('ROOT_CONT'),
-      nested: leftFor('NEST'),
-      nestedContinuation: leftFor('NEST_CONT'),
-      odd: leftFor('ODD'),
-      oddContinuation: leftFor('ODD_CONT'),
-      ordered: leftFor('ORDERED'),
-      orderedContinuation: leftFor('ORDERED_CONT'),
+      root: leftFor("ROOT"),
+      rootContinuation: leftFor("ROOT_CONT"),
+      nested: leftFor("NEST"),
+      nestedContinuation: leftFor("NEST_CONT"),
+      odd: leftFor("ODD"),
+      oddContinuation: leftFor("ODD_CONT"),
+      ordered: leftFor("ORDERED"),
+      orderedContinuation: leftFor("ORDERED_CONT"),
     };
   }, id);
 
-  const aligned = (a, b) =>
-    typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) < 1;
-  const allFound = Object.values(positions).every((value) => typeof value === 'number');
+  const aligned = (a, b) => typeof a === "number" && typeof b === "number" && Math.abs(a - b) < 1;
+  const allFound = Object.values(positions).every((value) => typeof value === "number");
   const structureCorrect =
     allFound &&
     aligned(positions.root, positions.rootContinuation) &&
@@ -674,12 +688,12 @@ async function probeListItemLayout(page) {
     positions.nested > positions.root &&
     positions.ordered > positions.odd;
   record(
-    'list layout: continuations follow syntax depth',
-    structureCorrect ? 'pass' : 'fail',
+    "list layout: continuations follow syntax depth",
+    structureCorrect ? "pass" : "fail",
     `root=${positions.root}/${positions.rootContinuation} nested=${positions.nested}/${positions.nestedContinuation} odd=${positions.odd}/${positions.oddContinuation} ordered=${positions.ordered}/${positions.orderedContinuation}`,
   );
   await page.screenshot({
-    path: path.join(SCREENSHOT_DIR, '22-list-continuation-indent.png'),
+    path: path.join(SCREENSHOT_DIR, "22-list-continuation-indent.png"),
     fullPage: false,
   });
   await resetToCanonical(page);
@@ -689,56 +703,56 @@ async function probeCloseBrackets(page) {
   // Type an opening bracket — the editor should auto-insert the
   // closer and leave the caret between them. Typing content then
   // shows the bracket pair surrounding it.
-  const content = page.locator('.cm-content').first();
+  const content = page.locator(".cm-content").first();
   await content.click();
   await page.waitForTimeout(180);
-  await page.keyboard.press('ControlOrMeta+End');
-  await page.keyboard.press('Enter');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
 
   async function checkPair(opener, closer, label) {
     const uniq = `${label}${Date.now().toString(36).slice(-4)}`;
-    await page.keyboard.press('End');
-    await page.keyboard.press('Enter');
+    await page.keyboard.press("End");
+    await page.keyboard.press("Enter");
     await page.keyboard.type(opener);
     await page.keyboard.type(uniq);
     await page.waitForTimeout(120);
     const lineText = await page.evaluate((marker) => {
-      const lines = Array.from(document.querySelectorAll('.cm-line'));
-      const hit = lines.find((el) => (el.textContent || '').includes(marker));
-      return hit ? (hit.textContent || '') : null;
+      const lines = Array.from(document.querySelectorAll(".cm-line"));
+      const hit = lines.find((el) => (el.textContent || "").includes(marker));
+      return hit ? hit.textContent || "" : null;
     }, uniq);
     const ok = lineText?.includes(`${opener}${uniq}${closer}`) ?? false;
     record(
       `closeBrackets: \`${opener}\` auto-pairs`,
-      ok ? 'pass' : 'fail',
+      ok ? "pass" : "fail",
       `line=${JSON.stringify(lineText?.slice(0, 60))}`,
     );
   }
 
-  await checkPair('[', ']', 'br');
-  await checkPair('*', '*', 'em');
-  await checkPair('_', '_', 'un');
-  await checkPair('`', '`', 'bt');
+  await checkPair("[", "]", "br");
+  await checkPair("*", "*", "em");
+  await checkPair("_", "_", "un");
+  await checkPair("`", "`", "bt");
 
   // Bold promote: typing `*` into an empty `*|*` pair should extend
   // to `**|**` rather than stepping through. Then content + a single
   // `*` should step through the inner asterisk, yielding `**foo*|*`.
   const boldMarker = `bd${Date.now().toString(36).slice(-4)}`;
-  await page.keyboard.press('End');
-  await page.keyboard.press('Enter');
-  await page.keyboard.type('**'); // extend on second `*` → `**|**`
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("**"); // extend on second `*` → `**|**`
   await page.keyboard.type(boldMarker);
   await page.waitForTimeout(120);
   const boldLine = await page.evaluate((marker) => {
-    const lines = Array.from(document.querySelectorAll('.cm-line'));
-    const hit = lines.find((el) => (el.textContent || '').includes(marker));
-    return hit ? (hit.textContent || '') : null;
+    const lines = Array.from(document.querySelectorAll(".cm-line"));
+    const hit = lines.find((el) => (el.textContent || "").includes(marker));
+    return hit ? hit.textContent || "" : null;
   }, boldMarker);
   const boldOk = boldLine?.includes(`**${boldMarker}**`) ?? false;
   record(
-    'closeBrackets: `**` promotes to double pair',
-    boldOk ? 'pass' : 'fail',
+    "closeBrackets: `**` promotes to double pair",
+    boldOk ? "pass" : "fail",
     `line=${JSON.stringify(boldLine?.slice(0, 60))}`,
   );
 
@@ -746,42 +760,41 @@ async function probeCloseBrackets(page) {
   // auto-pair, but typing a space at a line prefix commits to an
   // unordered-list marker and must consume the generated closer.
   const listMarker = `li${Date.now().toString(36).slice(-4)}`;
-  await page.keyboard.press('End');
-  await page.keyboard.press('Enter');
-  await page.keyboard.type('* ');
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("* ");
   await page.keyboard.type(listMarker);
   await page.waitForTimeout(120);
   const listLine = await page.evaluate((marker) => {
-    const lines = Array.from(document.querySelectorAll('.cm-line'));
-    const hit = lines.find((el) => (el.textContent || '').includes(marker));
-    return hit ? (hit.textContent || '') : null;
+    const lines = Array.from(document.querySelectorAll(".cm-line"));
+    const hit = lines.find((el) => (el.textContent || "").includes(marker));
+    return hit ? hit.textContent || "" : null;
   }, listMarker);
-  const listOk =
-    listLine?.includes(listMarker) === true && !listLine.endsWith('*');
+  const listOk = listLine?.includes(listMarker) === true && !listLine.endsWith("*");
   record(
-    'closeBrackets: `* ` starts a list without a trailing star',
-    listOk ? 'pass' : 'fail',
+    "closeBrackets: `* ` starts a list without a trailing star",
+    listOk ? "pass" : "fail",
     `line=${JSON.stringify(listLine?.slice(0, 60))}`,
   );
 }
 
 async function scrollToInlineMarksTable(page) {
   return scrollUntil(page, () =>
-    Array.from(document.querySelectorAll('.cm-atomic-table')).some((w) =>
-      (w.textContent || '').includes('struck text'),
+    Array.from(document.querySelectorAll(".cm-atomic-table")).some((w) =>
+      (w.textContent || "").includes("struck text"),
     ),
   );
 }
 
 function inlineMarksTableDims(page) {
   return page.evaluate(() => {
-    const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
     return w
       ? {
-          cols: w.querySelectorAll('thead th').length,
-          rows: w.querySelectorAll('tbody tr').length,
+          cols: w.querySelectorAll("thead th").length,
+          rows: w.querySelectorAll("tbody tr").length,
         }
       : null;
   });
@@ -795,18 +808,18 @@ async function probeTableCellEditing(page) {
   // --- a literal `|` typed in a cell must not split / corrupt the row ---
   await resetToCanonical(page);
   if (!(await scrollToInlineMarksTable(page))) {
-    record('table cell: pipe does not corrupt row', 'fail', 'table not found');
+    record("table cell: pipe does not corrupt row", "fail", "table not found");
     return;
   }
   const before = await inlineMarksTableDims(page);
   await page.evaluate(() => {
-    const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
     const src = w
-      .querySelectorAll('tbody tr')[0]
-      .querySelectorAll('td')[0]
-      .querySelector('.cm-atomic-table-cell-source');
+      .querySelectorAll("tbody tr")[0]
+      .querySelectorAll("td")[0]
+      .querySelector(".cm-atomic-table-cell-source");
     src.focus();
     const r = document.createRange();
     r.selectNodeContents(src);
@@ -815,54 +828,53 @@ async function probeTableCellEditing(page) {
     sel.removeAllRanges();
     sel.addRange(r);
   });
-  await page.keyboard.type('|x');
+  await page.keyboard.type("|x");
   await page.waitForTimeout(400);
   const after = await inlineMarksTableDims(page);
   const cellHasPipe = await page.evaluate(() => {
-    const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
     if (!w) return false;
-    const td0 = w.querySelectorAll('tbody tr')[0].querySelectorAll('td')[0];
-    return (td0?.dataset.raw || '').includes('|');
+    const td0 = w.querySelectorAll("tbody tr")[0].querySelectorAll("td")[0];
+    return (td0?.dataset.raw || "").includes("|");
   });
-  const pipeOk =
-    after && after.cols === before.cols && after.rows === before.rows && cellHasPipe;
+  const pipeOk = after && after.cols === before.cols && after.rows === before.rows && cellHasPipe;
   record(
-    'table cell: pipe does not corrupt row',
-    pipeOk ? 'pass' : 'fail',
-    `before=${before?.cols}x${before?.rows} after=${after ? `${after.cols}x${after.rows}` : 'GONE'} cellKeptPipe=${cellHasPipe}`,
+    "table cell: pipe does not corrupt row",
+    pipeOk ? "pass" : "fail",
+    `before=${before?.cols}x${before?.rows} after=${after ? `${after.cols}x${after.rows}` : "GONE"} cellKeptPipe=${cellHasPipe}`,
   );
 
   // --- Enter advances to the next cell (mirrors Tab) ---
   await resetToCanonical(page);
   await scrollToInlineMarksTable(page);
   const startIdx = await page.evaluate(() => {
-    const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
-    const cells = Array.from(w.querySelectorAll('th, td'));
-    const startCell = w.querySelectorAll('tbody tr')[0].querySelectorAll('td')[0];
-    startCell.querySelector('.cm-atomic-table-cell-source').focus();
+    const cells = Array.from(w.querySelectorAll("th, td"));
+    const startCell = w.querySelectorAll("tbody tr")[0].querySelectorAll("td")[0];
+    startCell.querySelector(".cm-atomic-table-cell-source").focus();
     return cells.indexOf(startCell);
   });
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("Enter");
   await page.waitForTimeout(150);
   const enterResult = await page.evaluate(() => {
-    const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
-    const cells = Array.from(w.querySelectorAll('th, td'));
+    const cells = Array.from(w.querySelectorAll("th, td"));
     const active = document.activeElement;
-    const activeCell = active?.closest?.('th, td');
+    const activeCell = active?.closest?.("th, td");
     return {
       idx: activeCell ? cells.indexOf(activeCell) : -2,
-      isSource: active?.classList?.contains('cm-atomic-table-cell-source') ?? false,
+      isSource: active?.classList?.contains("cm-atomic-table-cell-source") ?? false,
     };
   });
   record(
-    'table cell: Enter advances to next cell',
-    enterResult.isSource && enterResult.idx === startIdx + 1 ? 'pass' : 'fail',
+    "table cell: Enter advances to next cell",
+    enterResult.isSource && enterResult.idx === startIdx + 1 ? "pass" : "fail",
     `from cell ${startIdx} → ${enterResult.idx} (source=${enterResult.isSource})`,
   );
 
@@ -872,46 +884,46 @@ async function probeTableCellEditing(page) {
   // The cell can sit below the fold after scroll-to-table — a real mouse
   // click only hits it if it's actually in the viewport, so center it.
   await page.evaluate(() => {
-    const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
-    w?.querySelectorAll('tbody tr')[0]
-      .querySelectorAll('td')[1]
-      .querySelector('.cm-atomic-strong')
-      ?.scrollIntoView({ block: 'center' });
+    w?.querySelectorAll("tbody tr")[0]
+      .querySelectorAll("td")[1]
+      .querySelector(".cm-atomic-strong")
+      ?.scrollIntoView({ block: "center" });
   });
   await page.waitForTimeout(150);
   const boldRect = await page.evaluate(() => {
-    const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
     const inner = w
-      .querySelectorAll('tbody tr')[0]
-      .querySelectorAll('td')[1]
-      .querySelector('.cm-atomic-strong');
+      .querySelectorAll("tbody tr")[0]
+      .querySelectorAll("td")[1]
+      .querySelector(".cm-atomic-strong");
     if (!inner) return null;
     const r = inner.getBoundingClientRect();
     return { x: r.x, y: r.y, w: r.width, h: r.height };
   });
   if (!boldRect) {
-    record('table cell: click on styled run keeps caret in place', 'fail', 'no bold run');
+    record("table cell: click on styled run keeps caret in place", "fail", "no bold run");
   } else {
     // Click ~30% into the bold word — well short of its end.
     await page.mouse.click(boldRect.x + boldRect.w * 0.3, boldRect.y + boldRect.h / 2);
     await page.waitForTimeout(150);
     const caret = await page.evaluate(() => {
-      const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-        (w) => (w.textContent || '').includes('struck text'),
+      const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+        (w.textContent || "").includes("struck text"),
       );
       const src = w
-        .querySelectorAll('tbody tr')[0]
-        .querySelectorAll('td')[1]
-        .querySelector('.cm-atomic-table-cell-source');
+        .querySelectorAll("tbody tr")[0]
+        .querySelectorAll("td")[1]
+        .querySelector(".cm-atomic-table-cell-source");
       const sel = getSelection();
       if (!sel || sel.rangeCount === 0 || !src.contains(sel.anchorNode)) {
         return { ok: false };
       }
-      const len = (src.textContent || '').length;
+      const len = (src.textContent || "").length;
       const rng = sel.getRangeAt(0).cloneRange();
       rng.selectNodeContents(src);
       rng.setEnd(sel.getRangeAt(0).startContainer, sel.getRangeAt(0).startOffset);
@@ -919,9 +931,9 @@ async function probeTableCellEditing(page) {
       return { ok: true, offset, len, atEnd: offset >= len };
     });
     record(
-      'table cell: click on styled run keeps caret in place',
-      caret.ok && !caret.atEnd ? 'pass' : 'fail',
-      `caret offset=${caret.offset}/${caret.len}${caret.atEnd ? ' (jumped to end)' : ''}`,
+      "table cell: click on styled run keeps caret in place",
+      caret.ok && !caret.atEnd ? "pass" : "fail",
+      `caret offset=${caret.offset}/${caret.len}${caret.atEnd ? " (jumped to end)" : ""}`,
     );
   }
 
@@ -935,7 +947,7 @@ async function probeTableCellEditing(page) {
 async function probeTableLinkIcon(page) {
   await resetToCanonical(page);
   if (!(await scrollToInlineMarksTable(page))) {
-    record('table cell: link icon opens URL', 'fail', 'table not found');
+    record("table cell: link icon opens URL", "fail", "table not found");
     return;
   }
   await page.evaluate(() => {
@@ -946,34 +958,32 @@ async function probeTableLinkIcon(page) {
     };
   });
   const rect = await page.evaluate(() => {
-    const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
     // Row 0, col 5 is `[example](https://example.org)`.
     const icon = w
-      .querySelectorAll('tbody tr')[0]
-      .querySelectorAll('td')[5]
-      .querySelector('.cm-atomic-link-icon');
+      .querySelectorAll("tbody tr")[0]
+      .querySelectorAll("td")[5]
+      .querySelector(".cm-atomic-link-icon");
     if (!icon) return null;
-    icon.scrollIntoView({ block: 'center' });
+    icon.scrollIntoView({ block: "center" });
     const r = icon.getBoundingClientRect();
     return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
   });
   if (!rect) {
-    record('table cell: link icon opens URL', 'fail', 'no .cm-atomic-link-icon element');
+    record("table cell: link icon opens URL", "fail", "no .cm-atomic-link-icon element");
     return;
   }
   await page.mouse.click(rect.x, rect.y);
   await page.waitForTimeout(200);
   const opened = await page.evaluate(() => window.__opened ?? []);
-  const activeStolen = await page.evaluate(
-    () => (document.activeElement?.className || '').includes('cm-atomic-table-cell-source'),
+  const activeStolen = await page.evaluate(() =>
+    (document.activeElement?.className || "").includes("cm-atomic-table-cell-source"),
   );
   record(
-    'table cell: link icon opens URL',
-    opened.length === 1 && opened[0] === 'https://example.org' && !activeStolen
-      ? 'pass'
-      : 'fail',
+    "table cell: link icon opens URL",
+    opened.length === 1 && opened[0] === "https://example.org" && !activeStolen ? "pass" : "fail",
     `opened=${JSON.stringify(opened)} caretStolen=${activeStolen}`,
   );
   await resetToCanonical(page);
@@ -985,18 +995,18 @@ async function probeTableLinkIcon(page) {
 async function tableMenuOp(page, anchorText, kind, index, itemLabel) {
   const opened = await page.evaluate(
     ({ anchorText, kind, index }) => {
-      const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-        (w) => (w.textContent || '').includes(anchorText),
+      const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+        (w.textContent || "").includes(anchorText),
       );
       if (!w) return false;
       const cell =
-        kind === 'header'
-          ? w.querySelectorAll('thead th')[index]
-          : w.querySelectorAll('tbody tr')[index]?.querySelectorAll('td')[1];
+        kind === "header"
+          ? w.querySelectorAll("thead th")[index]
+          : w.querySelectorAll("tbody tr")[index]?.querySelectorAll("td")[1];
       if (!cell) return false;
       const r = cell.getBoundingClientRect();
       cell.dispatchEvent(
-        new MouseEvent('contextmenu', {
+        new MouseEvent("contextmenu", {
           bubbles: true,
           cancelable: true,
           clientX: r.x + r.width / 2,
@@ -1010,9 +1020,9 @@ async function tableMenuOp(page, anchorText, kind, index, itemLabel) {
   if (!opened) return false;
   await page.waitForTimeout(100);
   const clicked = await page.evaluate((itemLabel) => {
-    const btn = Array.from(
-      document.querySelectorAll('.cm-atomic-table-menu-item'),
-    ).find((b) => b.textContent === itemLabel);
+    const btn = Array.from(document.querySelectorAll(".cm-atomic-table-menu-item")).find(
+      (b) => b.textContent === itemLabel,
+    );
     if (!btn) return false;
     btn.click();
     return true;
@@ -1023,13 +1033,13 @@ async function tableMenuOp(page, anchorText, kind, index, itemLabel) {
 
 function tableDims(page, anchorText) {
   return page.evaluate((anchorText) => {
-    const w = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes(anchorText),
+    const w = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes(anchorText),
     );
     if (!w) return null;
     return {
-      cols: w.querySelectorAll('thead th').length,
-      rows: w.querySelectorAll('tbody tr').length,
+      cols: w.querySelectorAll("thead th").length,
+      rows: w.querySelectorAll("tbody tr").length,
     };
   }, anchorText);
 }
@@ -1050,54 +1060,53 @@ async function probeTableMenuOps(page) {
   // detect the `.cm-atomic-table` element directly (matches the other
   // table probes).
   const found = await scrollUntil(page, () =>
-    Array.from(document.querySelectorAll('.cm-atomic-table')).some(
-      (w) => (w.textContent || '').includes('struck text'),
+    Array.from(document.querySelectorAll(".cm-atomic-table")).some((w) =>
+      (w.textContent || "").includes("struck text"),
     ),
   );
   if (!found) {
-    record('table menu: column/row ops apply', 'fail', 'inline-marks table not found');
+    record("table menu: column/row ops apply", "fail", "inline-marks table not found");
     return;
   }
 
-  const start = await tableDims(page, 'struck text');
+  const start = await tableDims(page, "struck text");
   if (!start) {
-    record('table menu: column/row ops apply', 'fail', 'no dims');
+    record("table menu: column/row ops apply", "fail", "no dims");
     return;
   }
 
   // [label, kind, index, dCols, dRows]
   const ops = [
-    ['Insert column left', 'header', 1, +1, 0],
-    ['Insert column right', 'header', 1, +1, 0],
-    ['Delete column', 'header', 1, -1, 0],
-    ['Insert row above', 'body', 1, 0, +1],
-    ['Insert row below', 'body', 1, 0, +1],
-    ['Delete row', 'body', 1, 0, -1],
+    ["Insert column left", "header", 1, +1, 0],
+    ["Insert column right", "header", 1, +1, 0],
+    ["Delete column", "header", 1, -1, 0],
+    ["Insert row above", "body", 1, 0, +1],
+    ["Insert row below", "body", 1, 0, +1],
+    ["Delete row", "body", 1, 0, -1],
   ];
 
   let cols = start.cols;
   let rows = start.rows;
   const failures = [];
   for (const [label, kind, index, dCols, dRows] of ops) {
-    const clicked = await tableMenuOp(page, 'struck text', kind, index, label);
-    const after = await tableDims(page, 'struck text');
+    const clicked = await tableMenuOp(page, "struck text", kind, index, label);
+    const after = await tableDims(page, "struck text");
     cols += dCols;
     rows += dRows;
-    const ok =
-      clicked && after && after.cols === cols && after.rows === rows;
+    const ok = clicked && after && after.cols === cols && after.rows === rows;
     if (!ok) {
       failures.push(
-        `${label} → ${after ? `${after.cols}x${after.rows}` : 'GONE'} (want ${cols}x${rows})`,
+        `${label} → ${after ? `${after.cols}x${after.rows}` : "GONE"} (want ${cols}x${rows})`,
       );
     }
   }
 
   record(
-    'table menu: column/row ops apply',
-    failures.length === 0 ? 'pass' : 'fail',
+    "table menu: column/row ops apply",
+    failures.length === 0 ? "pass" : "fail",
     failures.length === 0
       ? `all 6 ops applied (from ${start.cols}x${start.rows})`
-      : failures.join('; '),
+      : failures.join("; "),
   );
 
   await resetToCanonical(page);
@@ -1107,19 +1116,21 @@ async function probeTableFromMarkdown(page) {
   // Regression guard for "type raw table markdown → widget appears".
   // Scroll to top, click a plain paragraph line, navigate to doc end,
   // type the markdown, and verify a new table widget materialized.
-  await page.locator('.cm-scroller').evaluate((el) => { el.scrollTop = 0; });
+  await page.locator(".cm-scroller").evaluate((el) => {
+    el.scrollTop = 0;
+  });
   await page.waitForTimeout(200);
   const plain = page.locator('.cm-line:not([class*="cm-atomic"])').first();
   const box = await plain.boundingBox();
   if (!box) {
-    record('table: instantiate from markdown', 'fail', 'no plain line to focus');
+    record("table: instantiate from markdown", "fail", "no plain line to focus");
     return;
   }
   await page.mouse.click(box.x + 20, box.y + box.height / 2);
   await page.waitForTimeout(180);
-  await page.keyboard.press('ControlOrMeta+End');
-  await page.keyboard.press('Enter');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
 
   const marker = `NEWTBL_${Date.now().toString(36).slice(-4)}`;
   // Keyboard.type sends literal characters; `|` and `-` type as-is.
@@ -1128,27 +1139,27 @@ async function probeTableFromMarkdown(page) {
   // might activate on the `-` row — type the whole table first, then
   // Enter at the end to close it.
   await page.keyboard.type(`| Col | ${marker} |`);
-  await page.keyboard.press('Enter');
-  await page.keyboard.type('| --- | --- |');
-  await page.keyboard.press('Enter');
-  await page.keyboard.type('| a | b |');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("| --- | --- |");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("| a | b |");
+  await page.keyboard.press("Enter");
   await page.waitForTimeout(400);
 
   // Query all table widgets and find the one whose header contains our
   // unique marker.
   const found = await page.evaluate((m) => {
-    const widgets = Array.from(document.querySelectorAll('.cm-atomic-table'));
+    const widgets = Array.from(document.querySelectorAll(".cm-atomic-table"));
     for (const w of widgets) {
-      const text = w.textContent || '';
+      const text = w.textContent || "";
       if (text.includes(m)) return true;
     }
     return false;
   }, marker);
 
   record(
-    'table: instantiate from markdown',
-    found ? 'pass' : 'fail',
+    "table: instantiate from markdown",
+    found ? "pass" : "fail",
     `marker ${marker} rendered as widget? ${found}`,
   );
 }
@@ -1157,38 +1168,42 @@ async function probeTableWidget(page) {
   // The showcase section contains a markdown table; it should render
   // as a `.cm-atomic-table` block widget with at least one `<table>`
   // inside, and cells should be contenteditable.
-  await page.locator('.cm-scroller').evaluate((el) => { el.scrollTop = 0; });
+  await page.locator(".cm-scroller").evaluate((el) => {
+    el.scrollTop = 0;
+  });
   await page.waitForTimeout(200);
   // Scroll a bit to get the table into viewport
-  await page.locator('.cm-scroller').evaluate((el) => { el.scrollTop = 500; });
+  await page.locator(".cm-scroller").evaluate((el) => {
+    el.scrollTop = 500;
+  });
   await page.waitForTimeout(400);
 
   const info = await page.evaluate(() => {
-    const wrap = document.querySelector('.cm-atomic-table');
+    const wrap = document.querySelector(".cm-atomic-table");
     if (!wrap) return { found: false };
-    const table = wrap.querySelector('table');
-    const headerCells = table?.querySelectorAll('thead th') ?? [];
-    const bodyRows = table?.querySelectorAll('tbody tr') ?? [];
+    const table = wrap.querySelector("table");
+    const headerCells = table?.querySelectorAll("thead th") ?? [];
+    const bodyRows = table?.querySelectorAll("tbody tr") ?? [];
     const firstCell = headerCells[0];
     // Cells themselves aren't contenteditable — the inner source
     // element is. This keeps the image preview strictly visual.
-    const source = firstCell?.querySelector('.cm-atomic-table-cell-source');
+    const source = firstCell?.querySelector(".cm-atomic-table-cell-source");
     return {
       found: true,
       cols: headerCells.length,
       rows: bodyRows.length,
-      cellEditable: source?.contentEditable === 'true',
-      firstHeader: source?.textContent ?? '',
+      cellEditable: source?.contentEditable === "true",
+      firstHeader: source?.textContent ?? "",
     };
   });
 
   if (!info.found) {
-    record('table widget: rendered', 'fail', 'no .cm-atomic-table');
+    record("table widget: rendered", "fail", "no .cm-atomic-table");
     return;
   }
   record(
-    'table widget: rendered',
-    info.cols > 0 && info.rows > 0 && info.cellEditable ? 'pass' : 'fail',
+    "table widget: rendered",
+    info.cols > 0 && info.rows > 0 && info.cellEditable ? "pass" : "fail",
     `${info.cols} cols × ${info.rows} rows, firstHeader=${JSON.stringify(info.firstHeader)}, editable=${info.cellEditable}`,
   );
 }
@@ -1202,31 +1217,31 @@ async function probeTableCellMarkdown(page) {
   // inside the cell's source element. On focus, the cell should swap
   // to plain text (no decoration spans) so typing stays clean; on
   // blur, decorations re-apply.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(200);
   for (let step = 0; step < 8; step++) {
     const present = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.cm-atomic-table')).some((w) =>
-        (w.textContent || '').includes('struck text'),
+      Array.from(document.querySelectorAll(".cm-atomic-table")).some((w) =>
+        (w.textContent || "").includes("struck text"),
       ),
     );
     if (present) break;
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 200;
     });
     await page.waitForTimeout(120);
   }
 
   const shape = await page.evaluate(() => {
-    const wrap = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const wrap = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
     if (!wrap) return { found: false };
-    const bodyRow = wrap.querySelector('tbody tr');
+    const bodyRow = wrap.querySelector("tbody tr");
     if (!bodyRow) return { found: false };
-    const cells = Array.from(bodyRow.querySelectorAll('td'));
+    const cells = Array.from(bodyRow.querySelectorAll("td"));
     // Expect 6 cells (Plain, Bold, Italic, Strike, Highlight, Link).
     const get = (cell, sel) => (cell ? cell.querySelector(sel) !== null : false);
     const boldCell = cells[1];
@@ -1236,61 +1251,58 @@ async function probeTableCellMarkdown(page) {
     const linkCell = cells[5];
     return {
       found: true,
-      hasBold: get(boldCell, '.cm-atomic-strong'),
-      boldText: boldCell?.querySelector('.cm-atomic-strong')?.textContent || '',
-      hasItalic: get(italicCell, '.cm-atomic-em'),
-      italicText: italicCell?.querySelector('.cm-atomic-em')?.textContent || '',
-      hasStrike: get(strikeCell, '.cm-atomic-strike'),
-      strikeText: strikeCell?.querySelector('.cm-atomic-strike')?.textContent || '',
-      hasHighlight: get(highlightCell, '.cm-atomic-highlight'),
-      highlightText:
-        highlightCell?.querySelector('.cm-atomic-highlight')?.textContent || '',
-      hasLink: get(linkCell, '.cm-atomic-link'),
-      linkText: linkCell?.querySelector('.cm-atomic-link')?.textContent || '',
-      linkUrl: linkCell?.querySelector('.cm-atomic-link-wrap')?.dataset.url || '',
-      boldCellText: boldCell?.textContent || '',
+      hasBold: get(boldCell, ".cm-atomic-strong"),
+      boldText: boldCell?.querySelector(".cm-atomic-strong")?.textContent || "",
+      hasItalic: get(italicCell, ".cm-atomic-em"),
+      italicText: italicCell?.querySelector(".cm-atomic-em")?.textContent || "",
+      hasStrike: get(strikeCell, ".cm-atomic-strike"),
+      strikeText: strikeCell?.querySelector(".cm-atomic-strike")?.textContent || "",
+      hasHighlight: get(highlightCell, ".cm-atomic-highlight"),
+      highlightText: highlightCell?.querySelector(".cm-atomic-highlight")?.textContent || "",
+      hasLink: get(linkCell, ".cm-atomic-link"),
+      linkText: linkCell?.querySelector(".cm-atomic-link")?.textContent || "",
+      linkUrl: linkCell?.querySelector(".cm-atomic-link-wrap")?.dataset.url || "",
+      boldCellText: boldCell?.textContent || "",
     };
   });
 
   if (!shape.found) {
-    record('cell markdown: table present', 'fail', 'inline-marks table not rendered');
+    record("cell markdown: table present", "fail", "inline-marks table not rendered");
     return;
   }
   record(
-    'cell markdown: bold decorates',
-    shape.hasBold && shape.boldText === 'bold text' ? 'pass' : 'fail',
+    "cell markdown: bold decorates",
+    shape.hasBold && shape.boldText === "bold text" ? "pass" : "fail",
     `hasBold=${shape.hasBold} text=${JSON.stringify(shape.boldText)}`,
   );
   record(
-    'cell markdown: italic decorates',
-    shape.hasItalic && shape.italicText === 'italic text' ? 'pass' : 'fail',
+    "cell markdown: italic decorates",
+    shape.hasItalic && shape.italicText === "italic text" ? "pass" : "fail",
     `hasItalic=${shape.hasItalic} text=${JSON.stringify(shape.italicText)}`,
   );
   record(
-    'cell markdown: strike decorates',
-    shape.hasStrike && shape.strikeText === 'struck text' ? 'pass' : 'fail',
+    "cell markdown: strike decorates",
+    shape.hasStrike && shape.strikeText === "struck text" ? "pass" : "fail",
     `hasStrike=${shape.hasStrike} text=${JSON.stringify(shape.strikeText)}`,
   );
   record(
-    'cell markdown: highlight decorates',
-    shape.hasHighlight && shape.highlightText === 'marked text' ? 'pass' : 'fail',
+    "cell markdown: highlight decorates",
+    shape.hasHighlight && shape.highlightText === "marked text" ? "pass" : "fail",
     `hasHighlight=${shape.hasHighlight} text=${JSON.stringify(shape.highlightText)}`,
   );
   record(
-    'cell markdown: link decorates',
-    shape.hasLink &&
-      shape.linkText === 'example' &&
-      shape.linkUrl === 'https://example.org'
-      ? 'pass'
-      : 'fail',
+    "cell markdown: link decorates",
+    shape.hasLink && shape.linkText === "example" && shape.linkUrl === "https://example.org"
+      ? "pass"
+      : "fail",
     `hasLink=${shape.hasLink} text=${JSON.stringify(shape.linkText)} url=${shape.linkUrl}`,
   );
   // textContent of the bold cell must equal its raw source so round-
   // trip is preserved — new inline-mark rendering can't silently
   // change what the outer source sees on re-serialize.
   record(
-    'cell markdown: decorated textContent round-trips',
-    shape.boldCellText === '**bold text**' ? 'pass' : 'fail',
+    "cell markdown: decorated textContent round-trips",
+    shape.boldCellText === "**bold text**" ? "pass" : "fail",
     `cellTextContent=${JSON.stringify(shape.boldCellText)}`,
   );
 
@@ -1299,14 +1311,14 @@ async function probeTableCellMarkdown(page) {
   // its `.cm-atomic-mark` delimiters reveal (display: inline via CSS).
   // All other cells in the table should remain without any `.active`.
   const focused = await page.evaluate(() => {
-    const wrap = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-      (w) => (w.textContent || '').includes('struck text'),
+    const wrap = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+      (w.textContent || "").includes("struck text"),
     );
     if (!wrap) return null;
-    const boldCell = wrap.querySelectorAll('tbody tr')[0]?.querySelectorAll('td')[1];
+    const boldCell = wrap.querySelectorAll("tbody tr")[0]?.querySelectorAll("td")[1];
     if (!boldCell) return null;
-    const src = boldCell.querySelector('.cm-atomic-table-cell-source');
-    const strong = boldCell.querySelector('.cm-atomic-strong');
+    const src = boldCell.querySelector(".cm-atomic-table-cell-source");
+    const strong = boldCell.querySelector(".cm-atomic-strong");
     if (!src || !strong) return null;
     src.focus();
     // Place caret inside the strong span's content.
@@ -1320,14 +1332,14 @@ async function probeTableCellMarkdown(page) {
     // Selection changes don't fire a focus event on their own — drive
     // the update directly by dispatching a keyup (mirroring a real
     // arrow-key navigation). The keyup handler calls the tracker.
-    src.dispatchEvent(new KeyboardEvent('keyup'));
+    src.dispatchEvent(new KeyboardEvent("keyup"));
     return new Promise((resolve) => {
       setTimeout(() => {
-        const strongWrap = boldCell.querySelector('.cm-atomic-strong-wrap');
+        const strongWrap = boldCell.querySelector(".cm-atomic-strong-wrap");
         resolve({
-          wrapActive: strongWrap?.classList.contains('active') ?? false,
+          wrapActive: strongWrap?.classList.contains("active") ?? false,
           otherWrapActiveCount: wrap.querySelectorAll(
-            '.cm-atomic-em-wrap.active, .cm-atomic-strike-wrap.active, .cm-atomic-link-wrap.active',
+            ".cm-atomic-em-wrap.active, .cm-atomic-strike-wrap.active, .cm-atomic-link-wrap.active",
           ).length,
         });
       }, 40);
@@ -1335,15 +1347,15 @@ async function probeTableCellMarkdown(page) {
   });
   if (focused) {
     record(
-      'cell markdown: caret in bold reveals its delimiters',
-      focused.wrapActive && focused.otherWrapActiveCount === 0 ? 'pass' : 'fail',
+      "cell markdown: caret in bold reveals its delimiters",
+      focused.wrapActive && focused.otherWrapActiveCount === 0 ? "pass" : "fail",
       `wrapActive=${focused.wrapActive} otherActive=${focused.otherWrapActiveCount}`,
     );
   } else {
     record(
-      'cell markdown: caret in bold reveals its delimiters',
-      'fail',
-      'bold cell / strong span not found',
+      "cell markdown: caret in bold reveals its delimiters",
+      "fail",
+      "bold cell / strong span not found",
     );
   }
 
@@ -1354,19 +1366,19 @@ async function probeTableCellMarkdown(page) {
     if (active instanceof HTMLElement) active.blur();
     return new Promise((resolve) => {
       setTimeout(() => {
-        const wrap = Array.from(document.querySelectorAll('.cm-atomic-table')).find(
-          (w) => (w.textContent || '').includes('struck text'),
+        const wrap = Array.from(document.querySelectorAll(".cm-atomic-table")).find((w) =>
+          (w.textContent || "").includes("struck text"),
         );
         if (!wrap) return resolve(null);
         resolve({
-          activeCount: wrap.querySelectorAll('.active').length,
+          activeCount: wrap.querySelectorAll(".active").length,
         });
       }, 40);
     });
   });
   record(
-    'cell markdown: blur collapses all delimiters',
-    collapsed && collapsed.activeCount === 0 ? 'pass' : 'fail',
+    "cell markdown: blur collapses all delimiters",
+    collapsed && collapsed.activeCount === 0 ? "pass" : "fail",
     `activeCount=${collapsed?.activeCount}`,
   );
 }
@@ -1379,17 +1391,17 @@ async function probeHeadingClickTargets(page) {
   // padding-top zone above a heading's text baseline must be small
   // enough that a click ~8px above the heading's top lands on the
   // preceding line, not on the heading.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   for (let step = 0; step < 12; step++) {
     const present = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.cm-line.cm-atomic-h2')).some(
-        (el) => (el.textContent || '').includes('And the usual markdown'),
+      Array.from(document.querySelectorAll(".cm-line.cm-atomic-h2")).some((el) =>
+        (el.textContent || "").includes("And the usual markdown"),
       ),
     );
     if (present) break;
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 200;
     });
     await page.waitForTimeout(120);
@@ -1397,11 +1409,11 @@ async function probeHeadingClickTargets(page) {
   await page.waitForTimeout(200);
 
   const info = await page.evaluate(() => {
-    const lines = Array.from(document.querySelectorAll('.cm-line'));
+    const lines = Array.from(document.querySelectorAll(".cm-line"));
     const h2Idx = lines.findIndex(
       (el) =>
-        el.classList.contains('cm-atomic-h2') &&
-        (el.textContent || '').includes('And the usual markdown'),
+        el.classList.contains("cm-atomic-h2") &&
+        (el.textContent || "").includes("And the usual markdown"),
     );
     if (h2Idx < 1) return null;
     const h2 = lines[h2Idx];
@@ -1410,12 +1422,12 @@ async function probeHeadingClickTargets(page) {
     return { top: r.top, paddingTop: parseFloat(cs.paddingTop) || 0 };
   });
   if (!info) {
-    record('heading click: padding-top zone under 8px', 'fail', 'h2 not located');
+    record("heading click: padding-top zone under 8px", "fail", "h2 not located");
     return;
   }
   record(
-    'heading click: padding-top zone under 8px',
-    info.paddingTop < 8 ? 'pass' : 'fail',
+    "heading click: padding-top zone under 8px",
+    info.paddingTop < 8 ? "pass" : "fail",
     `paddingTop=${info.paddingTop.toFixed(1)}px`,
   );
 
@@ -1428,18 +1440,18 @@ async function probeHeadingClickTargets(page) {
     const node = sel?.anchorNode;
     const el =
       node?.nodeType === 1
-        ? /** @type {Element} */ (node).closest?.('.cm-line')
-        : node?.parentElement?.closest?.('.cm-line');
+        ? /** @type {Element} */ (node).closest?.(".cm-line")
+        : node?.parentElement?.closest?.(".cm-line");
     if (!el) return null;
     return {
-      isHeading: el.classList.contains('cm-atomic-h2'),
-      text: (el.textContent || '').slice(0, 40),
+      isHeading: el.classList.contains("cm-atomic-h2"),
+      text: (el.textContent || "").slice(0, 40),
     };
   });
   record(
-    'heading click: y above heading lands on preceding line',
-    landedAbove && !landedAbove.isHeading ? 'pass' : 'fail',
-    `isHeading=${landedAbove?.isHeading} text=${JSON.stringify(landedAbove?.text ?? '')}`,
+    "heading click: y above heading lands on preceding line",
+    landedAbove && !landedAbove.isHeading ? "pass" : "fail",
+    `isHeading=${landedAbove?.isHeading} text=${JSON.stringify(landedAbove?.text ?? "")}`,
   );
 }
 
@@ -1458,18 +1470,18 @@ async function probeWidgetMarginDrift(page) {
   // (the block widget whose margin-vs-padding caused the original
   // regression), so any future widget-height mis-measurement that
   // adds a similar offset would make this probe fail.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(200);
   for (let step = 0; step < 12; step++) {
     const present = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.cm-line.cm-atomic-h2')).some(
-        (el) => (el.textContent || '').includes('And the usual markdown'),
+      Array.from(document.querySelectorAll(".cm-line.cm-atomic-h2")).some((el) =>
+        (el.textContent || "").includes("And the usual markdown"),
       ),
     );
     if (present) break;
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 200;
     });
     await page.waitForTimeout(120);
@@ -1477,11 +1489,11 @@ async function probeWidgetMarginDrift(page) {
   await page.waitForTimeout(300);
 
   const target = await page.evaluate(() => {
-    const h2 = Array.from(document.querySelectorAll('.cm-line.cm-atomic-h2')).find(
-      (el) => (el.textContent || '').includes('And the usual markdown'),
+    const h2 = Array.from(document.querySelectorAll(".cm-line.cm-atomic-h2")).find((el) =>
+      (el.textContent || "").includes("And the usual markdown"),
     );
     const emptyAbove = h2?.previousElementSibling;
-    if (!h2 || !emptyAbove || (emptyAbove.textContent || '').trim().length > 0) {
+    if (!h2 || !emptyAbove || (emptyAbove.textContent || "").trim().length > 0) {
       return null;
     }
     const r = emptyAbove.getBoundingClientRect();
@@ -1489,9 +1501,9 @@ async function probeWidgetMarginDrift(page) {
   });
   if (!target) {
     record(
-      'click routing: empty line above heading lands on the empty line',
-      'fail',
-      'could not locate empty line above heading',
+      "click routing: empty line above heading lands on the empty line",
+      "fail",
+      "could not locate empty line above heading",
     );
     return;
   }
@@ -1503,16 +1515,16 @@ async function probeWidgetMarginDrift(page) {
   // path) wouldn't silently pass.
   const clickX = 300;
   const samples = [
-    { label: 'top-edge', y: target.top + 1 },
-    { label: 'center', y: target.top + target.height / 2 },
-    { label: 'bottom-edge', y: target.bottom - 1 },
+    { label: "top-edge", y: target.top + 1 },
+    { label: "center", y: target.top + target.height / 2 },
+    { label: "bottom-edge", y: target.bottom - 1 },
   ];
   const results = [];
   for (const { label, y } of samples) {
     await page.evaluate(() => {
-      const h2 = Array.from(
-        document.querySelectorAll('.cm-line.cm-atomic-h2'),
-      ).find((el) => (el.textContent || '').includes('And the usual markdown'));
+      const h2 = Array.from(document.querySelectorAll(".cm-line.cm-atomic-h2")).find((el) =>
+        (el.textContent || "").includes("And the usual markdown"),
+      );
       if (!h2) return;
       const range = document.createRange();
       range.setStart(h2, 0);
@@ -1528,22 +1540,22 @@ async function probeWidgetMarginDrift(page) {
       const node = sel?.anchorNode;
       const lineEl =
         node?.nodeType === 1
-          ? /** @type {Element} */ (node).closest?.('.cm-line')
-          : /** @type {Element | null | undefined} */ (node?.parentElement)?.closest?.('.cm-line');
+          ? /** @type {Element} */ (node).closest?.(".cm-line")
+          : /** @type {Element | null | undefined} */ (node?.parentElement)?.closest?.(".cm-line");
       return {
-        isHeading: lineEl?.classList.contains('cm-atomic-h2') ?? false,
-        isEmpty: (lineEl?.textContent || '').trim().length === 0,
+        isHeading: lineEl?.classList.contains("cm-atomic-h2") ?? false,
+        isEmpty: (lineEl?.textContent || "").trim().length === 0,
       };
     });
     results.push({ label, y: Math.round(y), ...landed });
   }
   const failed = results.filter((r) => r.isHeading || !r.isEmpty);
   record(
-    'click routing: empty line above heading lands on the empty line',
-    failed.length === 0 ? 'pass' : 'fail',
+    "click routing: empty line above heading lands on the empty line",
+    failed.length === 0 ? "pass" : "fail",
     failed.length === 0
       ? `all ${results.length} samples ok`
-      : `failed at ${failed.map((f) => `${f.label}(y=${f.y})`).join(', ')}`,
+      : `failed at ${failed.map((f) => `${f.label}(y=${f.y})`).join(", ")}`,
   );
 }
 
@@ -1551,7 +1563,7 @@ async function probeHorizontalRule(page) {
   // The showcase section includes a `---` line. On inactive (cold)
   // state it should be classed as `cm-atomic-hr` so the CSS rule
   // renders, and the raw characters should be hidden.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(200);
@@ -1560,37 +1572,33 @@ async function probeHorizontalRule(page) {
   // so elements outside the viewport don't exist in the DOM).
   for (let step = 0; step < 12; step++) {
     const present = await page.evaluate(
-      () => document.querySelector('.cm-line.cm-atomic-hr') !== null,
+      () => document.querySelector(".cm-line.cm-atomic-hr") !== null,
     );
     if (present) break;
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 200;
     });
     await page.waitForTimeout(120);
   }
 
   const info = await page.evaluate(() => {
-    const el = document.querySelector('.cm-line.cm-atomic-hr');
+    const el = document.querySelector(".cm-line.cm-atomic-hr");
     if (!el) return { found: false };
     return {
       found: true,
-      text: el.textContent || '',
+      text: el.textContent || "",
     };
   });
 
   if (!info.found) {
-    record('horizontal rule: line class applied', 'fail', 'no .cm-atomic-hr');
+    record("horizontal rule: line class applied", "fail", "no .cm-atomic-hr");
     return;
   }
   const hidden = info.text.trim().length === 0;
+  record("horizontal rule: line class applied", "pass", `text=${JSON.stringify(info.text)}`);
   record(
-    'horizontal rule: line class applied',
-    'pass',
-    `text=${JSON.stringify(info.text)}`,
-  );
-  record(
-    'horizontal rule: raw chars hidden',
-    hidden ? 'pass' : 'fail',
+    "horizontal rule: raw chars hidden",
+    hidden ? "pass" : "fail",
     `trimmed text length = ${info.text.trim().length}`,
   );
 }
@@ -1606,38 +1614,38 @@ async function probeBackslashEscape(page) {
   // at scrollTop=0. Scroll down until a line matching the marker
   // word is rendered, giving the probe a stable target regardless of
   // upstream showcase length changes.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(150);
   for (let step = 0; step < 12; step++) {
     const present = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.cm-line')).some((el) =>
-        (el.textContent || '').includes('Escapes like'),
+      Array.from(document.querySelectorAll(".cm-line")).some((el) =>
+        (el.textContent || "").includes("Escapes like"),
       ),
     );
     if (present) break;
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 200;
     });
     await page.waitForTimeout(120);
   }
 
   const inactive = await page.evaluate(() => {
-    const lines = Array.from(document.querySelectorAll('.cm-line'));
-    const line = lines.find((el) => (el.textContent || '').includes('Escapes like'));
-    return line ? (line.textContent || '') : null;
+    const lines = Array.from(document.querySelectorAll(".cm-line"));
+    const line = lines.find((el) => (el.textContent || "").includes("Escapes like"));
+    return line ? line.textContent || "" : null;
   });
 
   if (!inactive) {
-    record('escape: inactive line drops backslashes', 'fail', 'sample line not rendered');
+    record("escape: inactive line drops backslashes", "fail", "sample line not rendered");
     return;
   }
   const hidesBackslash =
-    !inactive.includes('\\.') && inactive.includes('domain.com') && inactive.includes('3.14');
+    !inactive.includes("\\.") && inactive.includes("domain.com") && inactive.includes("3.14");
   record(
-    'escape: inactive line drops backslashes',
-    hidesBackslash ? 'pass' : 'fail',
+    "escape: inactive line drops backslashes",
+    hidesBackslash ? "pass" : "fail",
     `text=${JSON.stringify(inactive.slice(0, 80))}`,
   );
 
@@ -1646,21 +1654,19 @@ async function probeBackslashEscape(page) {
   // the actionability checks, more reliable than computing the box
   // and calling page.mouse.click at those coords (which can miss
   // when the target lands at a viewport edge).
-  const sampleLine = page
-    .locator('.cm-line', { hasText: 'Escapes like' })
-    .first();
+  const sampleLine = page.locator(".cm-line", { hasText: "Escapes like" }).first();
   await sampleLine.click({ position: { x: 20, y: 4 } });
   await page.waitForTimeout(200);
 
   const active = await page.evaluate(() => {
-    const lines = Array.from(document.querySelectorAll('.cm-line'));
-    const line = lines.find((el) => (el.textContent || '').includes('Escapes like'));
-    return line ? (line.textContent || '') : null;
+    const lines = Array.from(document.querySelectorAll(".cm-line"));
+    const line = lines.find((el) => (el.textContent || "").includes("Escapes like"));
+    return line ? line.textContent || "" : null;
   });
   record(
-    'escape: active line reveals backslashes',
-    active && active.includes('\\.') ? 'pass' : 'fail',
-    `text=${JSON.stringify((active || '').slice(0, 80))}`,
+    "escape: active line reveals backslashes",
+    active && active.includes("\\.") ? "pass" : "fail",
+    `text=${JSON.stringify((active || "").slice(0, 80))}`,
   );
 }
 
@@ -1674,7 +1680,7 @@ async function probeLinkScope(page) {
   //   `A link to [example](https://example.org) for reference.`
 
   // Reset scroll so we don't land on a link from a later section.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(120);
@@ -1683,12 +1689,12 @@ async function probeLinkScope(page) {
   // Scroll until it's in the DOM.
   for (let step = 0; step < 12; step++) {
     const present = await page.evaluate(() =>
-      Array.from(document.querySelectorAll('.cm-line')).some((el) =>
-        (el.textContent || '').includes('A link to'),
+      Array.from(document.querySelectorAll(".cm-line")).some((el) =>
+        (el.textContent || "").includes("A link to"),
       ),
     );
     if (present) break;
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 200;
     });
     await page.waitForTimeout(120);
@@ -1696,66 +1702,66 @@ async function probeLinkScope(page) {
 
   // Initial (inactive) read: brackets and URL should be hidden.
   const initialText = await page.evaluate(() => {
-    const line = Array.from(document.querySelectorAll('.cm-line')).find(
-      (el) => (el.textContent || '').includes('A link to'),
+    const line = Array.from(document.querySelectorAll(".cm-line")).find((el) =>
+      (el.textContent || "").includes("A link to"),
     );
-    return line ? (line.textContent || '') : null;
+    return line ? line.textContent || "" : null;
   });
   if (!initialText) {
-    record('link: inactive line hides brackets + URL', 'fail', 'sample line not rendered');
+    record("link: inactive line hides brackets + URL", "fail", "sample line not rendered");
     return;
   }
   const initiallyCollapsed =
-    initialText.includes('A link to example for reference.') &&
-    !initialText.includes('https://') &&
-    !initialText.includes('](');
+    initialText.includes("A link to example for reference.") &&
+    !initialText.includes("https://") &&
+    !initialText.includes("](");
   record(
-    'link: inactive line hides brackets + URL',
-    initiallyCollapsed ? 'pass' : 'fail',
+    "link: inactive line hides brackets + URL",
+    initiallyCollapsed ? "pass" : "fail",
     `text=${JSON.stringify(initialText.slice(0, 80))}`,
   );
 
   // Click somewhere on the same line but NOT on the link — between
   // "A" and "link", near the start. Old behavior revealed the URL
   // for the whole line. New behavior should keep the link collapsed.
-  const lineHandle = page.locator('.cm-line', { hasText: 'A link to' }).first();
+  const lineHandle = page.locator(".cm-line", { hasText: "A link to" }).first();
   const box = await lineHandle.boundingBox();
   if (!box) {
-    record('link: line-active-but-outside-link stays collapsed', 'fail', 'no bbox');
+    record("link: line-active-but-outside-link stays collapsed", "fail", "no bbox");
     return;
   }
   await page.mouse.click(box.x + 10, box.y + box.height / 2);
   await page.waitForTimeout(200);
   const lineActiveText = await page.evaluate(() => {
-    const line = Array.from(document.querySelectorAll('.cm-line')).find(
-      (el) => (el.textContent || '').includes('A link'),
+    const line = Array.from(document.querySelectorAll(".cm-line")).find((el) =>
+      (el.textContent || "").includes("A link"),
     );
-    return line ? (line.textContent || '') : null;
+    return line ? line.textContent || "" : null;
   });
   const stayedCollapsed =
     lineActiveText !== null &&
-    !lineActiveText.includes('](') &&
-    !lineActiveText.includes('https://');
+    !lineActiveText.includes("](") &&
+    !lineActiveText.includes("https://");
   record(
-    'link: line-active-but-outside-link stays collapsed',
-    stayedCollapsed ? 'pass' : 'fail',
-    `text=${JSON.stringify((lineActiveText ?? '').slice(0, 80))}`,
+    "link: line-active-but-outside-link stays collapsed",
+    stayedCollapsed ? "pass" : "fail",
+    `text=${JSON.stringify((lineActiveText ?? "").slice(0, 80))}`,
   );
 
   // Now click directly on the link's rendered text. Reach through
   // the .cm-atomic-link span to get a click target that lands on
   // the link's text range.
   const linkBox = await page.evaluate(() => {
-    const lines = Array.from(document.querySelectorAll('.cm-line'));
-    const line = lines.find((el) => (el.textContent || '').includes('A link to'));
+    const lines = Array.from(document.querySelectorAll(".cm-line"));
+    const line = lines.find((el) => (el.textContent || "").includes("A link to"));
     if (!line) return null;
-    const link = line.querySelector('.cm-atomic-link');
+    const link = line.querySelector(".cm-atomic-link");
     if (!link) return null;
     const r = link.getBoundingClientRect();
     return { x: r.x, y: r.y, w: r.width, h: r.height };
   });
   if (!linkBox) {
-    record('link: cursor inside link reveals brackets + URL', 'fail', 'no .cm-atomic-link');
+    record("link: cursor inside link reveals brackets + URL", "fail", "no .cm-atomic-link");
     return;
   }
   // Click slightly left of the right edge of the span to avoid the
@@ -1763,38 +1769,38 @@ async function probeLinkScope(page) {
   await page.mouse.click(linkBox.x + Math.max(4, linkBox.w * 0.4), linkBox.y + linkBox.h / 2);
   await page.waitForTimeout(200);
   const insideLinkText = await page.evaluate(() => {
-    const line = Array.from(document.querySelectorAll('.cm-line')).find(
-      (el) => (el.textContent || '').includes('A link'),
+    const line = Array.from(document.querySelectorAll(".cm-line")).find((el) =>
+      (el.textContent || "").includes("A link"),
     );
-    return line ? (line.textContent || '') : null;
+    return line ? line.textContent || "" : null;
   });
   const revealed =
     insideLinkText !== null &&
-    insideLinkText.includes('](') &&
-    insideLinkText.includes('https://example.org');
+    insideLinkText.includes("](") &&
+    insideLinkText.includes("https://example.org");
   record(
-    'link: cursor inside link reveals brackets + URL',
-    revealed ? 'pass' : 'fail',
-    `text=${JSON.stringify((insideLinkText ?? '').slice(0, 80))}`,
+    "link: cursor inside link reveals brackets + URL",
+    revealed ? "pass" : "fail",
+    `text=${JSON.stringify((insideLinkText ?? "").slice(0, 80))}`,
   );
 
   // Finally, click outside the line entirely and confirm the link
   // collapses back.
-  const escapesLine = page.locator('.cm-line', { hasText: 'Escapes like' }).first();
+  const escapesLine = page.locator(".cm-line", { hasText: "Escapes like" }).first();
   if ((await escapesLine.count()) > 0) {
     const eBox = await escapesLine.boundingBox();
     if (eBox) {
       await page.mouse.click(eBox.x + 10, eBox.y + eBox.height / 2);
       await page.waitForTimeout(200);
       const collapsedAgain = await page.evaluate(() => {
-        const line = Array.from(document.querySelectorAll('.cm-line')).find(
-          (el) => (el.textContent || '').includes('A link to'),
+        const line = Array.from(document.querySelectorAll(".cm-line")).find((el) =>
+          (el.textContent || "").includes("A link to"),
         );
-        return line ? !((line.textContent || '').includes('](')) : false;
+        return line ? !(line.textContent || "").includes("](") : false;
       });
       record(
-        'link: cursor leaves link → collapses again',
-        collapsedAgain ? 'pass' : 'fail',
+        "link: cursor leaves link → collapses again",
+        collapsedAgain ? "pass" : "fail",
         `collapsedAgain=${collapsedAgain}`,
       );
     }
@@ -1808,30 +1814,34 @@ async function probeInitialReveal(page) {
   //
   // Reload the demo with `?reveal=<phrase>` — the demo's App reads
   // that query param and passes it through as `initialRevealText`.
-  const phrase = 'And the usual markdown';
+  const phrase = "And the usual markdown";
   const url = `${base}/?reveal=${encodeURIComponent(phrase)}`;
-  await page.goto(url, { waitUntil: 'networkidle' });
-  await page.waitForSelector('.cm-editor');
+  await page.goto(url, { waitUntil: "networkidle" });
+  await page.waitForSelector(".cm-editor");
   // Wait for the reveal effect to paint.
   await page.waitForTimeout(400);
 
   const visible = await page.evaluate(() => {
-    const el = document.querySelector('.cm-initialRevealMatch');
+    const el = document.querySelector(".cm-initialRevealMatch");
     if (!(el instanceof HTMLElement)) return { found: false };
     const r = el.getBoundingClientRect();
     return {
       found: true,
-      text: (el.textContent || '').slice(0, 48),
+      text: (el.textContent || "").slice(0, 48),
       top: Math.round(r.top),
     };
   });
   if (!visible.found) {
-    record('initial reveal: highlight renders on mount', 'fail', '.cm-initialRevealMatch not in DOM');
+    record(
+      "initial reveal: highlight renders on mount",
+      "fail",
+      ".cm-initialRevealMatch not in DOM",
+    );
     return;
   }
   record(
-    'initial reveal: highlight renders on mount',
-    visible.text.includes(phrase) ? 'pass' : 'fail',
+    "initial reveal: highlight renders on mount",
+    visible.text.includes(phrase) ? "pass" : "fail",
     `text=${JSON.stringify(visible.text)}`,
   );
 
@@ -1839,8 +1849,8 @@ async function probeInitialReveal(page) {
   // of the top of its scroll parent. On a fresh viewport (900px tall),
   // the match should be comfortably above the bottom half.
   record(
-    'initial reveal: match scrolled near top',
-    visible.top < 450 ? 'pass' : 'fail',
+    "initial reveal: match scrolled near top",
+    visible.top < 450 ? "pass" : "fail",
     `top=${visible.top}px`,
   );
 
@@ -1848,18 +1858,18 @@ async function probeInitialReveal(page) {
   // the state field cleared itself (the decoration is gone).
   await page.waitForTimeout(3500);
   const stillVisible = await page.evaluate(
-    () => document.querySelector('.cm-initialRevealMatch') !== null,
+    () => document.querySelector(".cm-initialRevealMatch") !== null,
   );
   record(
-    'initial reveal: highlight auto-clears after fade',
-    !stillVisible ? 'pass' : 'fail',
+    "initial reveal: highlight auto-clears after fade",
+    !stillVisible ? "pass" : "fail",
     `stillPresent=${stillVisible}`,
   );
 
   // Re-navigate WITHOUT the reveal param so subsequent probes start
   // from a clean-URL state.
-  await page.goto(`${base}/`, { waitUntil: 'networkidle' });
-  await page.waitForSelector('.cm-editor');
+  await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  await page.waitForSelector(".cm-editor");
   await page.waitForTimeout(200);
 }
 
@@ -1869,17 +1879,15 @@ async function probeImageBlock(page) {
   // widget in the DOM, with an actual `<img>` inside pointing at the
   // URL parsed from the source. Natural images smaller than the
   // content width should NOT be upscaled.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(200);
   // Scroll until an image widget lands in the virtualized viewport.
   for (let step = 0; step < 15; step++) {
-    const present = await page.evaluate(
-      () => document.querySelector('.cm-atomic-image') !== null,
-    );
+    const present = await page.evaluate(() => document.querySelector(".cm-atomic-image") !== null);
     if (present) break;
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 250;
     });
     await page.waitForTimeout(150);
@@ -1888,9 +1896,9 @@ async function probeImageBlock(page) {
   await page.waitForTimeout(300);
 
   const imgInfo = await page.evaluate(() => {
-    const widget = document.querySelector('.cm-atomic-image');
+    const widget = document.querySelector(".cm-atomic-image");
     if (!widget) return { found: false };
-    const img = widget.querySelector('img');
+    const img = widget.querySelector("img");
     if (!img) return { found: true, hasImg: false };
     // Wait for intrinsic size
     return {
@@ -1898,22 +1906,25 @@ async function probeImageBlock(page) {
       hasImg: true,
       src: img.src,
       natural: { w: img.naturalWidth, h: img.naturalHeight },
-      rendered: { w: Math.round(img.getBoundingClientRect().width), h: Math.round(img.getBoundingClientRect().height) },
+      rendered: {
+        w: Math.round(img.getBoundingClientRect().width),
+        h: Math.round(img.getBoundingClientRect().height),
+      },
     };
   });
 
   if (!imgInfo.found) {
-    record('image block: widget rendered', 'fail', 'no .cm-atomic-image in DOM');
+    record("image block: widget rendered", "fail", "no .cm-atomic-image in DOM");
     return;
   }
   if (!imgInfo.hasImg) {
-    record('image block: widget rendered', 'fail', 'widget has no <img>');
+    record("image block: widget rendered", "fail", "widget has no <img>");
     return;
   }
 
   record(
-    'image block: widget rendered',
-    'pass',
+    "image block: widget rendered",
+    "pass",
     `src=${imgInfo.src.slice(0, 40)} natural=${imgInfo.natural.w}x${imgInfo.natural.h}`,
   );
 
@@ -1922,8 +1933,8 @@ async function probeImageBlock(page) {
   // rounding.
   const notUpscaled = imgInfo.rendered.w <= imgInfo.natural.w + 1;
   record(
-    'image block: no upscaling below natural size',
-    notUpscaled ? 'pass' : 'fail',
+    "image block: no upscaling below natural size",
+    notUpscaled ? "pass" : "fail",
     `natural=${imgInfo.natural.w}px rendered=${imgInfo.rendered.w}px`,
   );
 
@@ -1932,28 +1943,31 @@ async function probeImageBlock(page) {
   // hidden via a Replace decoration; activating the line (cursor
   // on it) removes the decoration so the raw text is back in the
   // rendered `.cm-line`'s textContent. We test that transition.
-  const widget = page.locator('.cm-atomic-image').first();
+  const widget = page.locator(".cm-atomic-image").first();
   await widget.click({ position: { x: 40, y: 40 } });
   await page.waitForTimeout(250);
   const revealedSource = await page.evaluate(() => {
-    const lines = Array.from(document.querySelectorAll('.cm-line'));
-    const source = lines.find((el) =>
-      (el.textContent || '').includes('![') &&
-      (el.textContent || '').includes('](http'),
+    const lines = Array.from(document.querySelectorAll(".cm-line"));
+    const source = lines.find(
+      (el) => (el.textContent || "").includes("![") && (el.textContent || "").includes("](http"),
     );
     if (!source) return { found: false };
     return {
       found: true,
-      text: (source.textContent || '').slice(0, 60),
+      text: (source.textContent || "").slice(0, 60),
     };
   });
 
   if (!revealedSource.found) {
-    record('image block: click reveals source markdown', 'fail', 'no source line with `![...](...)` in DOM');
+    record(
+      "image block: click reveals source markdown",
+      "fail",
+      "no source line with `![...](...)` in DOM",
+    );
   } else {
     record(
-      'image block: click reveals source markdown',
-      'pass',
+      "image block: click reveals source markdown",
+      "pass",
       `text=${JSON.stringify(revealedSource.text)}`,
     );
   }
@@ -1965,7 +1979,7 @@ async function probeTaskList(page) {
   // bare `content.click()` can land inside a table cell and trap
   // subsequent keystrokes in its contenteditable instead of the CM6
   // editor.
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(200);
@@ -1975,9 +1989,9 @@ async function probeTaskList(page) {
     await page.mouse.click(box.x + 20, box.y + box.height / 2);
   }
   await page.waitForTimeout(180);
-  await page.keyboard.press('ControlOrMeta+End');
-  await page.keyboard.press('Enter');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("ControlOrMeta+End");
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Enter");
 
   const uniq = `TASK_${Date.now().toString(36).slice(-4)}`;
   await page.keyboard.type(`- [ ] ${uniq}`);
@@ -1987,8 +2001,8 @@ async function probeTaskList(page) {
     .locator(`.cm-line:has-text("${uniq}") input.cm-atomic-task-checkbox`)
     .count();
   record(
-    'task list: checkbox appears',
-    checkboxCount > 0 ? 'pass' : 'fail',
+    "task list: checkbox appears",
+    checkboxCount > 0 ? "pass" : "fail",
     `checkbox count on task line = ${checkboxCount}`,
   );
   if (checkboxCount === 0) return;
@@ -1999,7 +2013,7 @@ async function probeTaskList(page) {
 
   const layout = await checkbox.evaluate((el) => {
     const style = getComputedStyle(el);
-    const line = el.closest('.cm-line');
+    const line = el.closest(".cm-line");
     const lineFontSize = line ? parseFloat(getComputedStyle(line).fontSize) : 0;
     const width = el.getBoundingClientRect().width;
     const marginLeft = parseFloat(style.marginLeft) || 0;
@@ -2007,18 +2021,16 @@ async function probeTaskList(page) {
     return {
       appearance: style.appearance,
       sizeEm: lineFontSize ? width / lineFontSize : 0,
-      footprintEm: lineFontSize
-        ? (width + marginLeft + marginRight) / lineFontSize
-        : 0,
+      footprintEm: lineFontSize ? (width + marginLeft + marginRight) / lineFontSize : 0,
     };
   });
   const layoutStable =
-    layout.appearance === 'none' &&
+    layout.appearance === "none" &&
     Math.abs(layout.sizeEm - 1.05) < 0.06 &&
     Math.abs(layout.footprintEm - 1.2) < 0.06;
   record(
-    'task list: checkbox layout stable',
-    layoutStable ? 'pass' : 'fail',
+    "task list: checkbox layout stable",
+    layoutStable ? "pass" : "fail",
     `appearance=${layout.appearance} size=${layout.sizeEm.toFixed(2)}em footprint=${layout.footprintEm.toFixed(2)}em`,
   );
 
@@ -2030,8 +2042,8 @@ async function probeTaskList(page) {
 
   const checkedNow = await checkbox.evaluate((el) => el.checked);
   record(
-    'task list: click toggles checked',
-    checkedNow ? 'pass' : 'fail',
+    "task list: click toggles checked",
+    checkedNow ? "pass" : "fail",
     `checkbox.checked = ${checkedNow}`,
   );
 
@@ -2042,8 +2054,8 @@ async function probeTaskList(page) {
   const nextMarker = `NEXT_${Date.now().toString(36).slice(-4)}`;
   await page.locator(`.cm-line:has-text("${uniq}")`).first().click({ force: true });
   await page.waitForTimeout(180);
-  await page.keyboard.press('End');
-  await page.keyboard.press('Enter');
+  await page.keyboard.press("End");
+  await page.keyboard.press("Enter");
   await page.keyboard.type(nextMarker);
   await page.waitForTimeout(200);
 
@@ -2051,8 +2063,8 @@ async function probeTaskList(page) {
     .locator(`.cm-line:has-text("${nextMarker}") input.cm-atomic-task-checkbox`)
     .count();
   record(
-    'task list: Enter continues as task',
-    nextHasCheckbox > 0 ? 'pass' : 'fail',
+    "task list: Enter continues as task",
+    nextHasCheckbox > 0 ? "pass" : "fail",
     `new line checkbox count = ${nextHasCheckbox}`,
   );
 
@@ -2062,25 +2074,25 @@ async function probeTaskList(page) {
     .evaluate((el) => el.className);
   const hasDoneClass = /cm-atomic-task-done/.test(lineClasses);
   record(
-    'task list: completed line strikes through',
-    hasDoneClass ? 'pass' : 'fail',
+    "task list: completed line strikes through",
+    hasDoneClass ? "pass" : "fail",
     `classes="${lineClasses}"`,
   );
 
-  await page.screenshot({ path: path.join(SCREENSHOT_DIR, '24-task-list.png'), fullPage: false });
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "24-task-list.png"), fullPage: false });
 }
 
 async function probeTyping(page) {
   // Cursor should already be somewhere in the doc. Type a burst of
   // characters and watch CLS.
   const cls = await measureCLS(page, 1200, async () => {
-    for (const ch of 'hello world') {
-      await page.keyboard.press(ch === ' ' ? 'Space' : `Key${ch.toUpperCase()}`);
+    for (const ch of "hello world") {
+      await page.keyboard.press(ch === " " ? "Space" : `Key${ch.toUpperCase()}`);
       await page.waitForTimeout(25);
     }
   });
-  const status = cls.total < 0.05 ? 'pass' : cls.total < 0.2 ? 'warn' : 'fail';
-  record('type inside line (CLS)', status, `total=${cls.total.toFixed(3)} shifts=${cls.count}`);
+  const status = cls.total < 0.05 ? "pass" : cls.total < 0.2 ? "warn" : "fail";
+  record("type inside line (CLS)", status, `total=${cls.total.toFixed(3)} shifts=${cls.count}`);
   return cls;
 }
 
@@ -2090,7 +2102,7 @@ async function probeDeepScrollRenders(page) {
   // to the bottom half of the doc and check that the headings in the
   // fresh viewport actually picked up their `cm-atomic-h*` classes
   // (i.e., the decoration plugin rebuilt with a tree that reaches here).
-  const editor = page.locator('.cm-scroller');
+  const editor = page.locator(".cm-scroller");
   await editor.evaluate((el) => {
     el.scrollTop = el.scrollHeight * 0.75;
   });
@@ -2098,16 +2110,16 @@ async function probeDeepScrollRenders(page) {
   await page.waitForTimeout(350);
 
   const headingsInViewport = await page.evaluate(() => {
-    const scroller = document.querySelector('.cm-scroller');
+    const scroller = document.querySelector(".cm-scroller");
     if (!scroller) return null;
     const vRect = scroller.getBoundingClientRect();
-    const lines = Array.from(document.querySelectorAll('.cm-line'));
+    const lines = Array.from(document.querySelectorAll(".cm-line"));
     let decorated = 0;
     let rawHeadings = 0;
     for (const el of lines) {
       const r = el.getBoundingClientRect();
       if (r.bottom < vRect.top || r.top > vRect.bottom) continue;
-      const text = el.textContent || '';
+      const text = el.textContent || "";
       const looksLikeHeading = /^#{1,6}\s/.test(text);
       const hasHeadingClass = /\bcm-atomic-h[1-6]\b/.test(el.className);
       if (hasHeadingClass) decorated++;
@@ -2118,51 +2130,61 @@ async function probeDeepScrollRenders(page) {
     return { decorated, rawHeadings };
   });
 
-  const status =
-    headingsInViewport && headingsInViewport.rawHeadings === 0 ? 'pass' : 'fail';
+  const status = headingsInViewport && headingsInViewport.rawHeadings === 0 ? "pass" : "fail";
   record(
-    'deep-scroll headings decorate',
+    "deep-scroll headings decorate",
     status,
-    `decorated=${headingsInViewport?.decorated ?? '?'} raw=${headingsInViewport?.rawHeadings ?? '?'}`,
+    `decorated=${headingsInViewport?.decorated ?? "?"} raw=${headingsInViewport?.rawHeadings ?? "?"}`,
   );
 }
 
 async function probeScroll(page) {
-  const editor = page.locator('.cm-scroller');
-  await editor.evaluate((el) => { el.scrollTop = 0; });
+  const editor = page.locator(".cm-scroller");
+  await editor.evaluate((el) => {
+    el.scrollTop = 0;
+  });
   await page.waitForTimeout(200);
   const cls = await measureCLS(page, 2000, async () => {
     await editor.evaluate(async (el) => {
       const step = Math.max(el.clientHeight * 0.8, 400);
       for (let i = 0; i < 10; i++) {
         el.scrollTop += step;
-        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       }
     });
   });
-  const status = cls.total < 0.15 ? 'pass' : cls.total < 0.6 ? 'warn' : 'fail';
+  const status = cls.total < 0.15 ? "pass" : cls.total < 0.6 ? "warn" : "fail";
   const topSrc = topShiftSources(cls.entries, 3);
-  record('scroll CLS (2s)', status, `total=${cls.total.toFixed(3)} shifts=${cls.count}${topSrc ? ` sources=${topSrc}` : ''}`);
-  await page.screenshot({ path: path.join(SCREENSHOT_DIR, '04-after-scroll.png'), fullPage: false });
+  record(
+    "scroll CLS (2s)",
+    status,
+    `total=${cls.total.toFixed(3)} shifts=${cls.count}${topSrc ? ` sources=${topSrc}` : ""}`,
+  );
+  await page.screenshot({
+    path: path.join(SCREENSHOT_DIR, "04-after-scroll.png"),
+    fullPage: false,
+  });
   return cls;
 }
 
 async function probeSelection(page) {
-  const editor = page.locator('.cm-scroller');
-  await editor.evaluate((el) => { el.scrollTop = 0; });
+  const editor = page.locator(".cm-scroller");
+  await editor.evaluate((el) => {
+    el.scrollTop = 0;
+  });
   await page.waitForTimeout(200);
 
   // Drag across multiple visible lines.
-  const lines = page.locator('.cm-line:not(:empty)');
+  const lines = page.locator(".cm-line:not(:empty)");
   const count = await lines.count();
   if (count < 3) {
-    record('drag-select across lines', 'fail', `only ${count} lines visible`);
+    record("drag-select across lines", "fail", `only ${count} lines visible`);
     return null;
   }
   const firstBox = await lines.nth(1).boundingBox();
   const lastBox = await lines.nth(Math.min(count - 1, 5)).boundingBox();
   if (!firstBox || !lastBox) {
-    record('drag-select across lines', 'fail', 'no bbox');
+    record("drag-select across lines", "fail", "no bbox");
     return null;
   }
 
@@ -2190,34 +2212,34 @@ async function probeSelection(page) {
   });
 
   if (selection.empty) {
-    record('drag-select across lines', 'fail', 'window.getSelection() empty');
+    record("drag-select across lines", "fail", "window.getSelection() empty");
   } else {
-    record('drag-select across lines', 'pass', `len=${selection.length}B`);
+    record("drag-select across lines", "pass", `len=${selection.length}B`);
   }
-  await page.screenshot({ path: path.join(SCREENSHOT_DIR, '05-selection.png'), fullPage: false });
+  await page.screenshot({ path: path.join(SCREENSHOT_DIR, "05-selection.png"), fullPage: false });
   return selection;
 }
 
 async function probeCopyIsRawMarkdown(page) {
   // Synthesize a copy event and capture what CM6 puts on the clipboard.
   const payload = await page.evaluate(() => {
-    const target = document.querySelector('.cm-content');
-    if (!target) return { error: 'no .cm-content' };
+    const target = document.querySelector(".cm-content");
+    if (!target) return { error: "no .cm-content" };
     const dt = new DataTransfer();
-    const ev = new ClipboardEvent('copy', { bubbles: true, cancelable: true, clipboardData: dt });
+    const ev = new ClipboardEvent("copy", { bubbles: true, cancelable: true, clipboardData: dt });
     target.dispatchEvent(ev);
-    return { text: dt.getData('text/plain') };
+    return { text: dt.getData("text/plain") };
   });
   if (!payload || payload.error) {
-    record('copy yields raw markdown', 'fail', payload?.error || 'unknown');
+    record("copy yields raw markdown", "fail", payload?.error || "unknown");
     return null;
   }
-  const text = payload.text || '';
+  const text = payload.text || "";
   const looksLikeMarkdown =
     /(^|\n)#{1,6}\s|\*\*|`{1,3}|(^|\n)[-*]\s|\[[^\]]+\]\(/.test(text) || text.length > 40;
-  const status = text && looksLikeMarkdown ? 'pass' : 'warn';
-  const preview = text.slice(0, 60).replace(/\n/g, '\\n');
-  record('copy yields raw markdown', status, `len=${text.length}B preview="${preview}"`);
+  const status = text && looksLikeMarkdown ? "pass" : "warn";
+  const preview = text.slice(0, 60).replace(/\n/g, "\\n");
+  record("copy yields raw markdown", status, `len=${text.length}B preview="${preview}"`);
   return payload;
 }
 
@@ -2248,19 +2270,19 @@ async function resetToCanonical(page) {
       // private mode / sandbox — nothing to clear
     }
   });
-  await page.goto(`${base}/`, { waitUntil: 'networkidle' });
-  await page.waitForSelector('.cm-editor');
+  await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  await page.waitForSelector(".cm-editor");
   await page.waitForTimeout(300);
 }
 
 async function scrollUntil(page, predicate, arg, maxSteps = 16) {
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(120);
   for (let i = 0; i < maxSteps; i++) {
     if (await page.evaluate(predicate, arg)) return true;
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 300;
     });
     await page.waitForTimeout(100);
@@ -2269,15 +2291,15 @@ async function scrollUntil(page, predicate, arg, maxSteps = 16) {
 }
 
 async function ensureFenceVisible(page) {
-  await page.locator('.cm-scroller').evaluate((el) => {
+  await page.locator(".cm-scroller").evaluate((el) => {
     el.scrollTop = 0;
   });
   await page.waitForTimeout(120);
   for (let i = 0; i < 12; i++) {
-    if ((await page.locator('.cm-line.cm-atomic-fenced-code').count()) >= 3) {
+    if ((await page.locator(".cm-line.cm-atomic-fenced-code").count()) >= 3) {
       return true;
     }
-    await page.locator('.cm-scroller').evaluate((el) => {
+    await page.locator(".cm-scroller").evaluate((el) => {
       el.scrollTop += 350;
     });
     await page.waitForTimeout(100);
@@ -2293,7 +2315,7 @@ async function ensureFenceVisible(page) {
 async function clickLine(page, locator, frac = 0.1) {
   let box = await locator.boundingBox();
   if (!box) return false;
-  const scroller = page.locator('.cm-scroller');
+  const scroller = page.locator(".cm-scroller");
   const sc = await scroller.boundingBox();
   if (sc) {
     const delta = box.y + box.height / 2 - (sc.y + sc.height / 2);
@@ -2319,7 +2341,7 @@ async function runEdge(page, name, prepare, action, durationMs = 1000) {
   await resetToCanonical(page);
   const ready = await prepare(page);
   if (!ready) {
-    record(name, 'fail', 'could not locate / position fixture');
+    record(name, "fail", "could not locate / position fixture");
     return null;
   }
   // Settle so the caret placement itself isn't inside the measurement
@@ -2329,19 +2351,15 @@ async function runEdge(page, name, prepare, action, durationMs = 1000) {
   // see the viewport itself lurching. Bracket the edit with scrollTop
   // reads so a `scrollIntoView` / heightmap re-estimate that yanks the
   // scroll position shows up as a non-zero scrollΔ even when CLS is 0.
-  const scrollBefore = await page
-    .locator('.cm-scroller')
-    .evaluate((el) => el.scrollTop);
+  const scrollBefore = await page.locator(".cm-scroller").evaluate((el) => el.scrollTop);
   const cls = await measureCLS(page, durationMs, () => action(page));
-  const scrollAfter = await page
-    .locator('.cm-scroller')
-    .evaluate((el) => el.scrollTop);
+  const scrollAfter = await page.locator(".cm-scroller").evaluate((el) => el.scrollTop);
   const scrollDelta = Math.round(scrollAfter - scrollBefore);
   const sources = topShiftSources(cls.entries, 5);
   record(
     name,
-    'info',
-    `CLS=${cls.total.toFixed(3)} scrollΔ=${scrollDelta}px shifts=${cls.count}${sources ? ` sources=${sources}` : ''}`,
+    "info",
+    `CLS=${cls.total.toFixed(3)} scrollΔ=${scrollDelta}px shifts=${cls.count}${sources ? ` sources=${sources}` : ""}`,
   );
   return { cls, scrollDelta };
 }
@@ -2354,30 +2372,28 @@ async function probeEditEdges(page) {
   // whether anything ABOVE the fence moves or the fence itself jumps.
   await runEdge(
     page,
-    'edge: Enter inside fenced code interior',
+    "edge: Enter inside fenced code interior",
     async (p) => {
       if (!(await ensureFenceVisible(p))) return false;
-      const interior = p.locator('.cm-line.cm-atomic-fenced-code').nth(1);
+      const interior = p.locator(".cm-line.cm-atomic-fenced-code").nth(1);
       if (!(await clickLine(p, interior, 0.2))) return false;
-      await p.keyboard.press('End');
+      await p.keyboard.press("End");
       return true;
     },
-    (p) => p.keyboard.press('Enter'),
+    (p) => p.keyboard.press("Enter"),
   );
 
   // Enter in the middle of a heading — splits it; the tail becomes a
   // paragraph (smaller line height than the heading).
   await runEdge(
     page,
-    'edge: Enter mid-heading',
+    "edge: Enter mid-heading",
     async (p) => {
-      if (!(await scrollUntil(p, hasLineWithText, 'And the usual markdown'))) return false;
-      const h2 = p
-        .locator('.cm-line.cm-atomic-h2', { hasText: 'And the usual markdown' })
-        .first();
+      if (!(await scrollUntil(p, hasLineWithText, "And the usual markdown"))) return false;
+      const h2 = p.locator(".cm-line.cm-atomic-h2", { hasText: "And the usual markdown" }).first();
       return clickLine(p, h2, 0.4);
     },
-    (p) => p.keyboard.press('Enter'),
+    (p) => p.keyboard.press("Enter"),
   );
 
   // --- Remove markdown / fence ---
@@ -2386,32 +2402,30 @@ async function probeEditEdges(page) {
   // a fence, so the whole block re-parses from code to paragraphs.
   await runEdge(
     page,
-    'edge: delete backtick from opening fence',
+    "edge: delete backtick from opening fence",
     async (p) => {
       if (!(await ensureFenceVisible(p))) return false;
-      const open = p.locator('.cm-line.cm-atomic-fenced-code').nth(0);
+      const open = p.locator(".cm-line.cm-atomic-fenced-code").nth(0);
       if (!(await clickLine(p, open, 0.05))) return false;
-      await p.keyboard.press('Home');
+      await p.keyboard.press("Home");
       return true;
     },
-    (p) => p.keyboard.press('Delete'),
+    (p) => p.keyboard.press("Delete"),
   );
 
   // Delete one `#` from an H2 (`## ` -> `# `), promoting it to a taller H1
   // and pushing everything below down.
   await runEdge(
     page,
-    'edge: delete `#` from heading (H2->H1)',
+    "edge: delete `#` from heading (H2->H1)",
     async (p) => {
-      if (!(await scrollUntil(p, hasLineWithText, 'And the usual markdown'))) return false;
-      const h2 = p
-        .locator('.cm-line.cm-atomic-h2', { hasText: 'And the usual markdown' })
-        .first();
+      if (!(await scrollUntil(p, hasLineWithText, "And the usual markdown"))) return false;
+      const h2 = p.locator(".cm-line.cm-atomic-h2", { hasText: "And the usual markdown" }).first();
       if (!(await clickLine(p, h2, 0.4))) return false;
-      await p.keyboard.press('Home');
+      await p.keyboard.press("Home");
       return true;
     },
-    (p) => p.keyboard.press('Delete'),
+    (p) => p.keyboard.press("Delete"),
   );
 
   // --- Backspace into fixtures ---
@@ -2421,15 +2435,15 @@ async function probeEditEdges(page) {
   // start, so the code block collapses into prose.
   await runEdge(
     page,
-    'edge: backspace fence opener into prior paragraph',
+    "edge: backspace fence opener into prior paragraph",
     async (p) => {
       if (!(await ensureFenceVisible(p))) return false;
-      const open = p.locator('.cm-line.cm-atomic-fenced-code').nth(0);
+      const open = p.locator(".cm-line.cm-atomic-fenced-code").nth(0);
       if (!(await clickLine(p, open, 0.05))) return false;
-      await p.keyboard.press('Home');
+      await p.keyboard.press("Home");
       return true;
     },
-    (p) => p.keyboard.press('Backspace'),
+    (p) => p.keyboard.press("Backspace"),
   );
 
   // Backspace at the start of a block image's source line. Merging it onto
@@ -2437,24 +2451,27 @@ async function probeEditEdges(page) {
   // the reserved widget height.
   await runEdge(
     page,
-    'edge: backspace into image source line',
+    "edge: backspace into image source line",
     async (p) => {
-      if (!(await scrollUntil(p, () => document.querySelector('.cm-atomic-image') !== null)))
+      if (!(await scrollUntil(p, () => document.querySelector(".cm-atomic-image") !== null)))
         return false;
       // Click the widget to reveal its `![alt](url)` source line.
-      await p.locator('.cm-atomic-image').first().click({ position: { x: 40, y: 40 } });
+      await p
+        .locator(".cm-atomic-image")
+        .first()
+        .click({ position: { x: 40, y: 40 } });
       await p.waitForTimeout(200);
       const source = p
-        .locator('.cm-line')
-        .filter({ hasText: '](http' })
-        .filter({ hasText: '![' })
+        .locator(".cm-line")
+        .filter({ hasText: "](http" })
+        .filter({ hasText: "![" })
         .first();
       if ((await source.count()) === 0) return false;
       if (!(await clickLine(p, source, 0.05))) return false;
-      await p.keyboard.press('Home');
+      await p.keyboard.press("Home");
       return true;
     },
-    (p) => p.keyboard.press('Backspace'),
+    (p) => p.keyboard.press("Backspace"),
   );
 
   // Leave the demo on pristine content so a human opening it after a run
@@ -2465,8 +2482,8 @@ async function probeEditEdges(page) {
 // Page-scoped predicate (passed to page.evaluate) — true when some
 // rendered `.cm-line` contains the given substring.
 function hasLineWithText(s) {
-  return Array.from(document.querySelectorAll('.cm-line')).some(
-    (el) => (el.textContent || '').includes(s),
+  return Array.from(document.querySelectorAll(".cm-line")).some((el) =>
+    (el.textContent || "").includes(s),
   );
 }
 
@@ -2482,21 +2499,21 @@ async function run() {
     // still closes rather than becoming another lingering handle.
     browser = await chromium.launch({ headless: !headed });
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
-    context.on('weberror', (err) => log('warn', `page weberror: ${err.error().message}`));
+    context.on("weberror", (err) => log("warn", `page weberror: ${err.error().message}`));
     const page = await context.newPage();
-    page.on('pageerror', (err) => {
+    page.on("pageerror", (err) => {
       pageErrors.push(err.message);
-      log('warn', `pageerror: ${err.message}`);
+      log("warn", `pageerror: ${err.message}`);
     });
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') log('warn', `console.error: ${msg.text()}`);
+    page.on("console", (msg) => {
+      if (msg.type() === "error") log("warn", `console.error: ${msg.text()}`);
     });
 
-    log('info', `navigating to ${base}/`);
-    await page.goto(`${base}/`, { waitUntil: 'networkidle' });
-    await page.waitForSelector('.cm-editor');
+    log("info", `navigating to ${base}/`);
+    await page.goto(`${base}/`, { waitUntil: "networkidle" });
+    await page.waitForSelector(".cm-editor");
     await page.waitForTimeout(400);
-    await page.screenshot({ path: path.join(SCREENSHOT_DIR, '01-initial.png'), fullPage: false });
+    await page.screenshot({ path: path.join(SCREENSHOT_DIR, "01-initial.png"), fullPage: false });
 
     await probeIdle(page);
     // Must run before any probe that focuses/clicks the editor.
@@ -2531,11 +2548,11 @@ async function run() {
     // Destructive edge edits — run last; each resets the doc to canonical.
     await probeEditEdges(page);
 
-    const failCount = results.filter((r) => r.status === 'fail').length;
-    const warnCount = results.filter((r) => r.status === 'warn').length;
-    console.log('');
-    log('info', `${results.length} probes: ${failCount} fail, ${warnCount} warn`);
-    log('info', `screenshots: ${SCREENSHOT_DIR}`);
+    const failCount = results.filter((r) => r.status === "fail").length;
+    const warnCount = results.filter((r) => r.status === "warn").length;
+    console.log("");
+    log("info", `${results.length} probes: ${failCount} fail, ${warnCount} warn`);
+    log("info", `screenshots: ${SCREENSHOT_DIR}`);
     process.exitCode = failCount > 0 ? 1 : 0;
   } finally {
     await browser?.close();

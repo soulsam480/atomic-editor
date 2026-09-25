@@ -1,5 +1,5 @@
-import { type Extension } from '@codemirror/state';
-export type WikiLinkStatus = 'resolved' | 'loading' | 'missing' | 'unresolved';
+import { type Extension } from "@codemirror/state";
+export type WikiLinkStatus = "resolved" | "loading" | "missing" | "unresolved";
 export interface WikiLinkSuggestion {
     target: string;
     label: string;
@@ -9,7 +9,7 @@ export interface WikiLinkSuggestion {
 export interface WikiLinkResolvedTarget {
     target: string;
     label: string;
-    status?: Exclude<WikiLinkStatus, 'loading'>;
+    status?: Exclude<WikiLinkStatus, "loading">;
 }
 export interface WikiLinksConfig {
     suggest?: (query: string) => Promise<WikiLinkSuggestion[]>;
