@@ -229,6 +229,33 @@ debounced and cached. See [`src/wiki-links.ts`](./src/wiki-links.ts) for the
 full config — custom serialization, resolver policies, suggestion limits, and
 the `WikiLinkSuggestion` / `WikiLinkResolvedTarget` types.
 
+## Mermaid diagrams
+
+Mermaid fences render as diagrams when you opt in with `mermaidBlocks()`.
+The renderer (`pele`) is loaded on demand, so editors that never show a
+diagram never download it.
+
+````ts
+import { h } from "vue";
+import { AtomicCodeMirrorEditor, mermaidBlocks } from "@atomic-editor/editor";
+
+h(AtomicCodeMirrorEditor, {
+  markdownSource: "# Flow\n\n```mermaid\nflowchart TD\n  A --> B\n```",
+  extensions: [mermaidBlocks()],
+});
+````
+
+A fence counts when its info string is `mermaid` or begins with `mermaid `.
+The whole fence is replaced by the diagram; move the cursor into it to edit
+the source, or use the Source button that appears on hover. The button is
+hidden in read-only mode. `mermaidBlocks({ maxWidth: 640 })` caps the SVG
+width in pixels.
+
+Pele's colors come from `--pele-*` variables. The stylesheet maps them to
+the `--atomic-editor-*` tokens, so diagrams recolor with the editor theme
+without re-rendering. Override the `--pele-*` variables directly if you need
+a different palette.
+
 ## Theming
 
 Every color, font, and size reads from a CSS custom property with an
@@ -245,41 +272,46 @@ re-maps the same variables.
 </html>
 ```
 
-| Variable                           | Dark default (auto-light on `[data-theme="light"]`) |
-| ---------------------------------- | --------------------------------------------------- |
-| `--atomic-editor-font`             | system sans                                         |
-| `--atomic-editor-font-mono`        | system mono                                         |
-| `--atomic-editor-body-size`        | `1.0625rem`                                         |
-| `--atomic-editor-body-leading`     | `1.7`                                               |
-| `--atomic-editor-measure`          | `70ch`                                              |
-| `--atomic-editor-fg`               | `#dcddde`                                           |
-| `--atomic-editor-fg-muted`         | `#888`                                              |
-| `--atomic-editor-fg-faint`         | `#666`                                              |
-| `--atomic-editor-bg`               | `#1e1e1e`                                           |
-| `--atomic-editor-bg-panel`         | `#252525`                                           |
-| `--atomic-editor-bg-surface`       | `#2d2d2d`                                           |
-| `--atomic-editor-border`           | `#3d3d3d`                                           |
-| `--atomic-editor-accent`           | `#7c3aed`                                           |
-| `--atomic-editor-accent-bright`    | `#a78bfa`                                           |
-| `--atomic-editor-accent-soft`      | blockquote rail / reveal tint                       |
-| `--atomic-editor-link`             | `#818cf8`                                           |
-| `--atomic-editor-link-hover`       | `#a5b4fc`                                           |
-| `--atomic-editor-code-bg`          | subtle dark panel                                   |
-| `--atomic-editor-selection-bg`     | accent-tinted 28%                                   |
-| **Code-token colors** (Palenight)  |                                                     |
-| `--atomic-editor-hl-keyword`       | `#c792ea`                                           |
-| `--atomic-editor-hl-string`        | `#c3e88d`                                           |
-| `--atomic-editor-hl-number`        | `#f78c6c`                                           |
-| `--atomic-editor-hl-comment`       | `#6a7a82`                                           |
-| `--atomic-editor-hl-type`          | `#ffcb6b`                                           |
-| `--atomic-editor-hl-function`      | `#82aaff`                                           |
-| `--atomic-editor-hl-property`      | `#82aaff`                                           |
-| `--atomic-editor-hl-regexp`        | `#f07178`                                           |
-| `--atomic-editor-hl-escape`        | `#89ddff`                                           |
-| `--atomic-editor-hl-tag`           | `#f07178`                                           |
-| `--atomic-editor-hl-variable`      | `#eeffff`                                           |
-| `--atomic-editor-hl-operator`      | `#89ddff`                                           |
-| `--atomic-editor-hl-invalid`       | `#ff5370`                                           |
+| Variable                          | Dark default (auto-light on `[data-theme="light"]`) |
+| --------------------------------- | --------------------------------------------------- |
+| `--atomic-editor-font`            | system sans                                         |
+| `--atomic-editor-font-mono`       | system mono                                         |
+| `--atomic-editor-body-size`       | `1.0625rem`                                         |
+| `--atomic-editor-body-leading`    | `1.7`                                               |
+| `--atomic-editor-measure`         | `80%` of the editor width                           |
+| `--atomic-editor-fg`              | `#dcddde`                                           |
+| `--atomic-editor-fg-muted`        | `#888`                                              |
+| `--atomic-editor-fg-faint`        | `#666`                                              |
+| `--atomic-editor-bg`              | `#1e1e1e`                                           |
+| `--atomic-editor-bg-panel`        | `#252525`                                           |
+| `--atomic-editor-bg-surface`      | `#2d2d2d`                                           |
+| `--atomic-editor-border`          | `#3d3d3d`                                           |
+| `--atomic-editor-accent`          | `#7c3aed`                                           |
+| `--atomic-editor-accent-bright`   | `#a78bfa`                                           |
+| `--atomic-editor-accent-soft`     | blockquote rail / reveal tint                       |
+| `--atomic-editor-link`            | `#818cf8`                                           |
+| `--atomic-editor-link-hover`      | `#a5b4fc`                                           |
+| `--atomic-editor-code-bg`         | subtle dark panel                                   |
+| `--atomic-editor-selection-bg`    | accent-tinted 28%                                   |
+| **Code-token colors** (Palenight) |                                                     |
+| `--atomic-editor-hl-keyword`      | `#c792ea`                                           |
+| `--atomic-editor-hl-string`       | `#c3e88d`                                           |
+| `--atomic-editor-hl-number`       | `#f78c6c`                                           |
+| `--atomic-editor-hl-comment`      | `#6a7a82`                                           |
+| `--atomic-editor-hl-type`         | `#ffcb6b`                                           |
+| `--atomic-editor-hl-function`     | `#82aaff`                                           |
+| `--atomic-editor-hl-property`     | `#82aaff`                                           |
+| `--atomic-editor-hl-regexp`       | `#f07178`                                           |
+| `--atomic-editor-hl-escape`       | `#89ddff`                                           |
+| `--atomic-editor-hl-tag`          | `#f07178`                                           |
+| `--atomic-editor-hl-variable`     | `#eeffff`                                           |
+| `--atomic-editor-hl-operator`     | `#89ddff`                                           |
+| `--atomic-editor-hl-invalid`      | `#ff5370`                                           |
+
+`--atomic-editor-measure` controls the text column, not the editor frame.
+It defaults to 80% of the editor width and falls back to full width below
+720px. Set it to a `ch` value such as `70ch` if you prefer a fixed reading
+measure.
 
 ## Extending with plugins
 

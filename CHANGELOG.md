@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 Until the package reaches `1.0.0`, minor versions may include breaking API
 changes as the public surface stabilizes.
 
+## [Unreleased]
+
+### Added
+
+- Opt-in `mermaidBlocks()` extension. Fences with a `mermaid` info string
+  render through a dynamically imported Pele renderer; the Source button
+  returns to the fence and read-only mode hides that button. Diagram colors
+  follow the editor's CSS-variable theme. `MermaidBlocksConfig` supports a
+  pixel `maxWidth` cap.
+
+### Changed
+
+- `--atomic-editor-measure` now defaults to 80% of the editor width, with
+  full width below 720px. The demo's reading-column stripe follows the same
+  default.
+
 ## [0.7.0]
 
 This release is a fork of
