@@ -115,6 +115,9 @@ class MermaidWidget extends WidgetType {
 
     const diagram = document.createElement("div");
     diagram.className = "cm-atomic-mermaid-diagram";
+    // Without this the browser places a DOM caret inside the widget on
+    // mousedown and selectionchange then reveals the source.
+    diagram.addEventListener("mousedown", (event) => event.preventDefault());
     wrap.appendChild(diagram);
 
     // Keeps the box honest while the dynamic import resolves, and is the
@@ -176,10 +179,12 @@ class MermaidWidget extends WidgetType {
     cleanups.delete(dom);
   }
 
-  // Zoom and pan live inside the SVG. CM6 must not move the caret or
-  // swallow pointer events when the reader interacts with the diagram.
-  ignoreEvent(event: Event): boolean {
-    return event.type === "mousedown" || event.type === "click" || event.type === "pointerdown";
+  // Zoom and pan live inside the SVG. Including `selectionchange` matters:
+  // the browser's default mousedown action still places a DOM caret inside
+  // a contenteditable=false widget, and CM6 would otherwise read that as a
+  // user selection and reveal the fence.
+  ignoreEvent(): boolean {
+    return true;
   }
 }
 
