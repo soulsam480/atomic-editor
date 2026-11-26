@@ -18,6 +18,8 @@ export { inlinePreview } from "./inline-preview";
 export type { InlinePreviewConfig } from "./inline-preview";
 export { highlightMarkdown } from "./highlight";
 export { imageBlocks } from "./image-blocks";
+export { mermaidBlocks } from "./mermaid-blocks";
+export type { MermaidBlocksConfig } from "./mermaid-blocks";
 export { tables } from "./table-widget";
 export type { TablesConfig } from "./table-widget";
 export { wikiLinks } from "./wiki-links";

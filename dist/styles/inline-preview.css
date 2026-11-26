@@ -31,13 +31,13 @@
   width: 100%;
 }
 
-/* Content container — constrain to a comfortable reading width. This
- * is where the prose feel mostly comes from: line length in the
- * 60–75ch range is what lets the eye sweep naturally. The full editor
- * frame can still be wide (for search UI, sidebars, etc.) — only the
- * text column is narrowed. */
+/* Content container — constrain to a comfortable reading width. The
+ * full editor frame can still be wide (for search UI, sidebars, etc.)
+ * — only the text column is narrowed. The percentage default keeps the
+ * column readable on wide screens without wasting half the frame; on
+ * narrow screens the column fills the scroller. */
 .atomic-cm-editor .cm-content {
-  max-width: var(--atomic-editor-measure, 70ch);
+  max-width: var(--atomic-editor-measure, 80%);
   margin-inline: auto;
   padding-inline: 0.5rem;
   font-family: var(--atomic-editor-font, system-ui, -apple-system, BlinkMacSystemFont, sans-serif);
@@ -45,6 +45,12 @@
   line-height: var(--atomic-editor-body-leading, 1.7);
   color: var(--atomic-editor-fg, #dcddde);
   text-wrap: pretty;
+}
+
+@media (max-width: 720px) {
+  .atomic-cm-editor .cm-content {
+    max-width: 100%;
+  }
 }
 
 /* Heading lines. Padding-top (not margin-top) creates the rhythm so
@@ -332,6 +338,92 @@
   max-width: 100%;
   height: auto;
   border-radius: 0.4em;
+}
+
+/* Mermaid block widget — replaces the whole fenced code block. Pele reads
+ * its palette from the `--pele-*` variables below, so mapping them to the
+ * editor tokens makes both themes work without a re-render. */
+.cm-atomic-mermaid {
+  --pele-bg: var(--atomic-editor-bg, #1e1e1e);
+  --pele-fg: var(--atomic-editor-fg, #dcddde);
+  --pele-muted: var(--atomic-editor-fg-muted, #888);
+  --pele-line: var(--atomic-editor-fg-muted, #888);
+  --pele-surface: var(--atomic-editor-bg-panel, #252525);
+  --pele-surface-alt: var(--atomic-editor-bg-surface, #2d2d2d);
+  --pele-border: var(--atomic-editor-border, #3d3d3d);
+  --pele-accent: var(--atomic-editor-accent, #7c3aed);
+  --pele-error: var(--atomic-editor-hl-invalid, #ff5370);
+  --pele-font: var(--atomic-editor-font, system-ui, -apple-system, sans-serif);
+  --pele-font-mono: var(--atomic-editor-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+
+  position: relative;
+  padding: 0.5em 0;
+  min-height: 220px;
+}
+
+.cm-atomic-mermaid-diagram {
+  min-height: 220px;
+}
+
+.cm-atomic-mermaid-diagram svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-inline: auto;
+}
+
+/* Raw source reserves the box while Pele loads and stays visible if the
+ * dynamic import or parse fails. */
+.cm-atomic-mermaid-placeholder {
+  margin: 0;
+  padding: 1em;
+  min-height: 220px;
+  font-family: var(--atomic-editor-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.85em;
+  white-space: pre-wrap;
+  color: var(--atomic-editor-fg-muted, #888);
+}
+
+.cm-atomic-mermaid-placeholder.cm-atomic-mermaid-error {
+  color: var(--atomic-editor-hl-invalid, #ff5370);
+}
+
+/* The mouse path into the source. Hidden at rest so the diagram reads as
+ * a document block rather than a control. */
+.cm-atomic-mermaid-source {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  z-index: 1;
+  padding: 0.15em 0.55em;
+  border: 1px solid var(--atomic-editor-border, #3d3d3d);
+  border-radius: var(--atomic-editor-radius, 6px);
+  background: var(--atomic-editor-bg-panel, #252525);
+  color: var(--atomic-editor-fg-muted, #888);
+  font: inherit;
+  font-size: 0.75em;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.cm-atomic-mermaid:hover .cm-atomic-mermaid-source,
+.cm-atomic-mermaid:focus-within .cm-atomic-mermaid-source,
+.cm-atomic-mermaid-source:focus-visible {
+  opacity: 1;
+}
+
+.cm-atomic-mermaid-source:hover {
+  color: var(--atomic-editor-accent, #7c3aed);
+}
+
+.cm-atomic-mermaid-source:focus-visible {
+  outline: 2px solid var(--atomic-editor-accent, #7c3aed);
+  outline-offset: 2px;
+}
+
+.cm-atomic-readonly .cm-atomic-mermaid-source {
+  display: none;
 }
 
 /* Bullet widget — replaces the raw `-` / `*` marker on bullet-list

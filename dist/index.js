@@ -10,6 +10,7 @@ export { createEditorRuntime } from "./editor-runtime";
 export { inlinePreview } from "./inline-preview";
 export { highlightMarkdown } from "./highlight";
 export { imageBlocks } from "./image-blocks";
+export { mermaidBlocks } from "./mermaid-blocks";
 export { tables } from "./table-widget";
 export { wikiLinks } from "./wiki-links";
 export { atomicEditorTheme, atomicMarkdownSyntax } from "./atomic-theme";

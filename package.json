@@ -1,6 +1,6 @@
 {
   "name": "@atomic-editor/editor",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "CodeMirror 6 markdown editor with Obsidian-style inline live preview.",
   "keywords": [
     "codemirror",
@@ -58,6 +58,9 @@
     "test:e2e:playwright": "playwright test",
     "test:e2e:headed": "playwright test --project=chromium --headed",
     "test:package": "node scripts/test-package.mjs"
+  },
+  "dependencies": {
+    "pele": "^1.13.0"
   },
   "devDependencies": {
     "@codemirror/autocomplete": "^6.20.0",
