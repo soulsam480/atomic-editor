@@ -414,6 +414,23 @@ export function generateSampleMarkdown(size: SampleSize, opts: SampleOptions = {
     "Wiki links connect notes. Type `[[` for autocomplete, and Cmd/Ctrl-click a rendered link to open it — inside inline code it stays raw:",
     "Labeled: [[demo-project-atlas|Project Atlas]] · Bare: [[demo-meeting-notes]] · In code: `[[demo-project-atlas]]`",
   );
+  // Mermaid fences render as diagrams. Two shapes so both parsers exercise
+  // on first load; the Source button is the way back into either one.
+  sections.push(
+    "Mermaid fences render as diagrams. Hover one and press Source to edit:",
+    ["```mermaid", "flowchart TD", "  A[Draft] --> B[Review]", "  B --> C[Publish]", "```"].join(
+      "\n",
+    ),
+    [
+      "```mermaid",
+      "sequenceDiagram",
+      "  participant A as Author",
+      "  participant B as Editor",
+      "  A->>B: Open note",
+      "  B-->>A: Render diagram",
+      "```",
+    ].join("\n"),
+  );
   // Secondary section — a deliberate "read the prose" zone after
   // the hero trio. Sets context for what the editor can do with
   // ordinary text: headings, emphasis, escapes, collapsed links.

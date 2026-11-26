@@ -454,18 +454,19 @@ a.demo-pill:hover {
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  /* Match the reading column EXACTLY. Two gotchas: (1) `ch` resolves
-   * against THIS element's font, and the editor renders .cm-scroller at
-   * the theme base size while .cm-content is one step larger — so pin
-   * the same font-size or the stripe computes narrower. (2) .cm-content
-   * is box-sizing:border-box, so its `max-width: measure` already
-   * includes the padding — match `measure` with no extra, or the stripe
-   * overshoots into the margins. */
-  font-size: var(--atomic-editor-body-size, 1.0625rem);
-  width: min(var(--atomic-editor-measure, 70ch), 100%);
+  /* Match the reading column EXACTLY. .cm-content is
+   * box-sizing:border-box, so its max-width already includes the
+   * padding — no extra here, or the stripe overshoots into the margins. */
+  width: var(--atomic-editor-measure, 80%);
   background: var(--atomic-editor-bg);
   z-index: -3;
   pointer-events: none;
+}
+
+@media (max-width: 720px) {
+  .demo-editor-pane .cm-scroller::before {
+    width: 100%;
+  }
 }
 
 .demo-editor-pane .cm-content,

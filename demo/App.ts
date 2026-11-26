@@ -10,6 +10,7 @@ import {
 } from "vue";
 import {
   AtomicCodeMirrorEditor,
+  mermaidBlocks,
   wikiLinks,
   type AtomicCodeMirrorEditorHandle,
   type WikiLinkSuggestion,
@@ -329,6 +330,7 @@ export const App = defineComponent({
         },
         openOnClick: true,
       }),
+      mermaidBlocks(),
     ];
 
     const spotlight = (phrase: string): void => {
