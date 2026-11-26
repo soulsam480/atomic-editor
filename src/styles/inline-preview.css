@@ -369,6 +369,7 @@
   display: block;
   max-width: 100%;
   height: auto;
+  margin-inline: auto;
 }
 
 /* Raw source reserves the box while Pele loads and stays visible if the
